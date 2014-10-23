@@ -1,14 +1,5 @@
 def buildInfo(env):
-	build = {
-		"debug": {
-			"flags": [ "g" ]
-		},
-		"release": {
-			"flags": [ "O2" ]
-		}
-	}
 	p= Project()
 	p.name= "manyfiles"
 	p.src= findFiles("./src", ["*.cpp"])
-	p.flags= build[env.tag]["flags"]
 	return p

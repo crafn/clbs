@@ -4,7 +4,7 @@ from files import *
 # Build environment
 # Passed to buildInfo(..) in build.clbs
 class Env:
-    tag= "" # Name supplied by command line
+    tag= "default" # Name supplied by command line
     os= "" # "windows" or "linux"
     arch= "x64" # @todo Auto-detect
 
@@ -15,8 +15,9 @@ class Project:
     defines= [] # Macro defines to compiler
     links= []
     targetdir= "."
-    objdir= "./obj"
+    tempdir= "./obj"
     compiler= "g++"
+    archiver= "ar"
     type= "exe" # "exe" or "lib"
 
 def fail(msg):
@@ -28,6 +29,8 @@ def msg(m):
 
 def buildProject(env, p):
     arg_str= ""
+    if p.type == "lib":
+        arg_str += " -c" # No linking
 
     # Compiler flags
     for f in p.flags:
@@ -44,13 +47,26 @@ def buildProject(env, p):
     for l in p.links:
         arg_str += " -l" + l
 
-    # Output name
-    arg_str += " -o " + p.targetdir + "/" + p.name + "_" + env.tag
-
-    # Issue compilation command
+    # Compilation output
+    cpl_out_path= p.targetdir + "/" + p.name
+    if p.type == "lib":
+        cpl_out_path += ".o"
+    arg_str += " -o " + cpl_out_path
+   
+    # Issue compilation
     compile_cmd= p.compiler + arg_str
     msg(compile_cmd)
     os.system(compile_cmd)
+
+    if p.type == "exe":
+        pass
+    elif p.type == "lib":
+        # .o to .a
+        ar_cmd= p.archiver + " rcs lib" + p.name + " " + cpl_out_path
+        msg(ar_cmd)
+        os.system(ar_cmd)
+    else:
+        fail("Unsupported project type: " + p.type)
 
 def build(args):
     build_file_src= ""
@@ -63,11 +79,10 @@ def build(args):
     # @todo Some restrictions!
     exec(build_file_src)
 
-    if len(args) < 1:
-        fail("Too few arguments")
     env= Env()
-    env.tag= args[0]
     env.os= platform.system().lower()
+    if len(args) >= 1:
+        env.tag= args[0]
     build_info= buildInfo(env)
     
     if isinstance(build_info, Project):

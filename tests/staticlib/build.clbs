@@ -1,0 +1,6 @@
+def buildInfo(env):
+	p= Project()
+	p.name= "staticlib"
+	p.src= [ "./src/lib.cpp" ]
+	p.type= "lib"
+	return p

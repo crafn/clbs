@@ -1,4 +1,6 @@
 def buildInfo(env):
+	if env.tag == "default":
+		env.tag= "debug"
 	build = {
 		"debug": {
 			"defines": [],
@@ -10,7 +12,7 @@ def buildInfo(env):
 		}
 	}
 	p= Project()
-	p.name= "hello"
+	p.name= "hello_" + env.tag
 	p.src= [ "./src/main.cpp" ]
 	p.flags= build[env.tag]["flags"]
 	p.defines= build[env.tag]["defines"]
