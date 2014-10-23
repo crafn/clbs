@@ -1,5 +1,5 @@
-def buildInfo(cfg):
-	cfgs = {
+def buildInfo(env):
+	build = {
 		"debug": {
 			"defines": [],
 			"flags": ["g", "O0"]
@@ -12,6 +12,6 @@ def buildInfo(cfg):
 	p= Project()
 	p.name= "hello"
 	p.src= [ "./src/main.cpp" ]
-	p.flags= cfgs[cfg]["flags"]
-	p.defines= cfgs[cfg]["defines"]
+	p.flags= build[env.tag]["flags"]
+	p.defines= build[env.tag]["defines"]
 	return p

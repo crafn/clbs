@@ -1,0 +1,26 @@
+def buildInfo(env):
+	os = {
+		"linux": {
+			"links": [ "GL" ]
+		},
+		"windows": {
+			"links":  [ "opengl32" ]
+		}
+	}
+	build = {
+		"debug": {
+			"defines": [],
+			"flags": ["g", "O0"]
+		},
+		"release": {
+			"defines": [ "NDEBUG" ],
+			"flags": [ "O2" ]
+		}
+	}
+	p= Project()
+	p.name= "hello"
+	p.src= [ "./src/main.cpp" ]
+	p.flags= build[env.tag]["flags"]
+	p.defines= build[env.tag]["defines"]
+	p.links= ["m"] + os[env.os]["links"]
+	return p
