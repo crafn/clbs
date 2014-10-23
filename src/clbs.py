@@ -90,15 +90,14 @@ def buildProject(env, p):
         link_out_path= p.targetdir + "/lib" + p.name + ".a"
     else:
         fail("Unsupported project type: " + p.type)
-    arg_str += " -o " + link_out_path
    
    # Issue linker
     if p.type == "exe":
-        link_cmd= p.compiler + arg_str
-        run(link_cmd)
+        arg_str += " -o " + link_out_path
+        run(p.compiler + arg_str)
     elif p.type == "lib":
-        ar_cmd= p.archiver + " rcs lib" + p.name + " " + cpl_out_path
-        run(ar_cmd)
+        arg_str= " rcs " + link_out_path + " " + arg_str
+        run(p.archiver + arg_str)
     else:
         fail("Unsupported project type: " + p.type)
 
