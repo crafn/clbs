@@ -21,13 +21,21 @@ class Project:
     type= "exe" # "exe" or "lib"
 
 def fail(msg):
-    print msg
+    print(msg)
     sys.exit(1)
 
-def msg(m):
-    print m
+def log(msg):
+    print(msg)
+
+def run(cmd):
+    log(cmd)
+    ret= os.system(cmd)
+    if ret != 0:
+        fail("clbs: build failed")
 
 def buildProject(env, p):
+    log("clbs: building " + p.name)
+    
     arg_str= ""
     if p.type == "lib":
         arg_str += " -c" # No linking
@@ -55,16 +63,14 @@ def buildProject(env, p):
    
     # Issue compilation
     compile_cmd= p.compiler + arg_str
-    msg(compile_cmd)
-    os.system(compile_cmd)
+    run(compile_cmd)
 
     if p.type == "exe":
         pass
     elif p.type == "lib":
         # .o to .a
         ar_cmd= p.archiver + " rcs lib" + p.name + " " + cpl_out_path
-        msg(ar_cmd)
-        os.system(ar_cmd)
+        run(ar_cmd)
     else:
         fail("Unsupported project type: " + p.type)
 

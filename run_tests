@@ -1,0 +1,34 @@
+#!/usr/bin/env python
+import os, sys
+
+tests= [
+	("hello", [ "debug", "release" ]),
+	("manyfiles", [ "" ]),
+	("multiplatform", [ "" ]),
+	("staticlib", [ "" ])
+]
+
+if __name__ == "__main__":
+	log= []
+	failures= 0
+	os.chdir("./tests")
+	for name, tags in tests:
+		os.chdir(name)
+		for tag in tags:
+			ret= os.system("../../clbs " + tag)
+			if ret == 0:
+				log.append("  " + name + " " + tag)
+			else:
+				failures += 1
+				log.append("* " + name + " " + tag)
+			print("")
+		os.chdir("..")
+
+	if failures == 0:
+		print("*** All tests completed ***")
+	else:
+		print("*** FAILED TESTS (" + str(failures) + ") ***")
+
+	for row in log:
+		print(row)
+
