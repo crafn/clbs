@@ -1,0 +1,18 @@
+def buildInfo(cfg):
+	cfgs = {
+		"debug": {
+			"defines": [],
+			"flags": ["g", "O0"]
+		},
+		"release": {
+			"defines": [ "NDEBUG" ],
+			"flags": [ "O2" ]
+		}
+	}
+	p= ProjectInfo()
+	p.name= "hello"
+	p.src= [ "./src/main.cpp" ]
+	p.flags= cfgs[cfg]["flags"]
+	p.defines= cfgs[cfg]["defines"]
+	return p
+

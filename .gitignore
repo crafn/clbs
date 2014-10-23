@@ -1,0 +1,15 @@
+*.so
+*.o
+*.out
+*.dll
+*.exe
+
+# Temp & backup files
+*.swo
+*.swp
+*~
+*.pyc
+
+# Test binaries
+*_debug
+*_release
