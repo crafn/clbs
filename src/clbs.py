@@ -1,4 +1,5 @@
 import platform, os, sys
+from files import *
 
 # Build environment
 # Passed to buildInfo(..) in build.clbs
@@ -14,6 +15,7 @@ class Project:
     defines= [] # Macro defines to compiler
     links= []
     targetdir= "."
+    objdir= "./obj"
     compiler= "g++"
     type= "exe" # "exe" or "lib"
 
