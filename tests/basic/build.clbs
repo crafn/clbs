@@ -9,10 +9,9 @@ def buildInfo(cfg):
 			"flags": [ "O2" ]
 		}
 	}
-	p= ProjectInfo()
+	p= Project()
 	p.name= "hello"
 	p.src= [ "./src/main.cpp" ]
 	p.flags= cfgs[cfg]["flags"]
 	p.defines= cfgs[cfg]["defines"]
 	return p
-

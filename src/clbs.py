@@ -1,6 +1,6 @@
 import os, sys
 
-class ProjectInfo:
+class Project:
     name= "default"
     src= [] # Paths to source files
     flags= [] # Flags to compiler
@@ -54,7 +54,7 @@ def build(args):
     exec(build_file_src)
     build_info= buildInfo(cfg)
     
-    if isinstance(build_info, ProjectInfo):
+    if isinstance(build_info, Project):
         buildProject(cfg, build_info)
     else:
         fail("buildInfo returned invalid type: " + type(build_info).__name__)
