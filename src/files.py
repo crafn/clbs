@@ -10,3 +10,9 @@ def findFiles(dir_path, patterns):
 				paths.append(rootdir + "/" + f)
 	return paths
 
+def filenamize(str):
+	return "".join([x if x.isalnum() else "_" for x in str])
+
+def mkDir(path):
+	if not os.path.exists(path):
+		os.mkdir(path)
