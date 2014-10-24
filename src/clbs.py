@@ -32,7 +32,15 @@ def buildProject(env, p, cache):
 
         compile_cmd= p.compiler + arg_str
         run(compile_cmd)
-        cache.buildTimes[(src_path, p._compileHash)]= modTime(src_path)
+
+        # Add compilation to cache
+        if not p._compileHash in cache.compiles:
+            cache.compiles[p._compileHash]= { 
+                    "srcBuildTimes": {},
+                    "srcDeps": []
+             }
+        cache.compiles[p._compileHash]["srcBuildTimes"][src_path]= \
+            modTime(src_path)
 
     # Link object files
     arg_str= ""
@@ -56,7 +64,11 @@ def cleanProject(env, p, cache):
     for src_path in p.src:
         obj_path= objFilePath(src_path, p)
         rmFile(obj_path)
-        del cache.buildTimes[(src_path, p._compileHash)]
+        if p._compileHash in cache.compiles:
+            compile= cache.compiles[p._compileHash]
+            if src_path in compile["srcBuildTimes"]:
+                del compile["srcBuildTimes"][src_path]
+            #del cache.compiles[p._compileHash]["srcDeps"][src_path]
     rmEmptyDir(p.tempDir)
 
     rmFile(targetPath(p))
@@ -92,8 +104,6 @@ def build(args):
 
     cache= loadCache()
     atexit.register(lambda: writeCache(cache))
-    if upd:
-        updateCache(cache, build_info)
 
     if isinstance(build_info, Project):
         build_info._compileHash= objHash(
@@ -103,6 +113,9 @@ def build(args):
                 build_info.tempDir,
                 build_info.compiler,
                 build_info.archiver))
+        if upd:
+            updateCache(cache, build_info)
+
         if not clean:
             buildProject(env, build_info, cache)
         else:
