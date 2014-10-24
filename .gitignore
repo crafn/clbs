@@ -10,6 +10,7 @@
 *.swp
 *~
 *.pyc
+*.cache
 
 # Test binaries
 *_debug

@@ -9,22 +9,22 @@ tests= [
 ]
 
 if __name__ == "__main__":
-	clean_str= ""
+	args= ""
 	if len(sys.argv) > 1:
-		clean_str= "clean"
+		args= " ".join(sys.argv[1:])
 	log= []
 	failures= 0
 	os.chdir("./tests")
-	for name, tags in tests:
+	for name, targets in tests:
 		os.chdir(name)
-		for tag in tags:
+		for target in targets:
 			# Build
-			ret= os.system("../../clbs " + tag + " " + clean_str)
+			ret= os.system("../../clbs " + target + " " + args)
 			if ret == 0:
-				log.append("  " + name + " " + tag + " " + clean_str)
+				log.append("  " + name + " " + target + " " + args)
 			else:
 				failures += 1
-				log.append("* " + name + " " + tag + " " + clean_str)
+				log.append("* " + name + " " + target + " " + args)
 			print("")
 
 		os.chdir("..")
