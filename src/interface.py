@@ -7,14 +7,16 @@ class Env:
 
 # Contains information on how to build a project
 class Project:
-    name= "default"
-    src= [] # Paths to source files
-    flags= [] # Flags to compiler
-    defines= [] # Macro defines to compiler
-    links= []
-    targetDir= "."
-    tempDir= "./obj"
-    compiler= "g++"
-    archiver= "ar"
-    type= "exe" # "exe" or "lib"
+	name= "default"
+	src= [] # Paths to source files
+	flags= [] # Flags to compiler
+	defines= [] # Macro defines to compiler
+	links= []
+	targetDir= "."
+	tempDir= "./obj"
+	compiler= "g++"
+	archiver= "ar"
+	type= "exe" # "exe" or "lib"
+	# Private
+	_compileHash= 0 # Hash from flags, defines, libs and links
 

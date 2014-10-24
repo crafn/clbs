@@ -1,4 +1,4 @@
-import os, sys
+import cPickle, hashlib, os, sys
 from files import *
 
 def fail(msg):
@@ -42,7 +42,7 @@ def modTime(path):
 		return 0
 
 def objFilePath(src_file_path, p):
-    return (p.tempDir + "/" + p.name + "_"
+    return (p.tempDir + "/" + str(p._compileHash) + "_"
             + filenamize(src_file_path) + ".o")
 
 def targetPath(p):
@@ -52,4 +52,7 @@ def targetPath(p):
         return p.targetDir + "/lib" + p.name + ".a"
     else:
         fail("Unsupported project type: " + p.type)
+
+def objHash(obj):
+	return hashlib.md5(cPickle.dumps(obj)).hexdigest()[0:8]
 

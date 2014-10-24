@@ -11,12 +11,16 @@ def run(cmd):
 
 def buildProject(env, p, cache):
     log("building " + p.name)
-    mkDir(p.tempDir)
+    
+    # Find list of outdated source files
+    outdated_src= []
+    for src_path in p.src:
+        if outdated(src_path, p._compileHash, cache):
+            outdated_src.append(src_path)
 
     # Compile all source files to object files
-    for src_path in p.src:
-        if not outdated(src_path, p.name, cache):
-            continue;
+    mkDir(p.tempDir)
+    for src_path in outdated_src:
         arg_str= ""
         arg_str += " -c" # No linking at this phase
         for f in p.flags:
@@ -25,13 +29,12 @@ def buildProject(env, p, cache):
             arg_str += " -D" + d
         arg_str += " " + src_path
         arg_str += " -o " + objFilePath(src_path, p)
-       
+
         compile_cmd= p.compiler + arg_str
         run(compile_cmd)
-        cache.buildTimes[(src_path, p.name)]= modTime(src_path)
+        cache.buildTimes[(src_path, p._compileHash)]= modTime(src_path)
 
     # Link object files
-
     arg_str= ""
     for s in p.src:
         arg_str += " " + objFilePath(s, p)
@@ -49,10 +52,11 @@ def buildProject(env, p, cache):
 
 def cleanProject(env, p, cache):
     log("cleaning " + p.name)
+    # @todo Clean obsolete files left after changing compileHash
     for src_path in p.src:
         obj_path= objFilePath(src_path, p)
         rmFile(obj_path)
-        del cache.buildTimes[(src_path, p.name)]
+        del cache.buildTimes[(src_path, p._compileHash)]
     rmEmptyDir(p.tempDir)
 
     rmFile(targetPath(p))
@@ -92,6 +96,13 @@ def build(args):
         updateCache(cache, build_info)
 
     if isinstance(build_info, Project):
+        build_info._compileHash= objHash(
+                (build_info.flags,
+                build_info.defines,
+                build_info.links,
+                build_info.tempDir,
+                build_info.compiler,
+                build_info.archiver))
         if not clean:
             buildProject(env, build_info, cache)
         else:
