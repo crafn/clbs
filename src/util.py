@@ -8,7 +8,13 @@ def fail(msg):
 def log(msg):
 	print("clbs: " + msg)
 
-# Finds paths to files in dir tree
+def run(cmd):
+    print(cmd)
+    ret= os.system(cmd)
+    if ret != 0:
+        fail("clbs: build failed")
+
+## Finds paths to files in dir tree
 def findFiles(dir_path, patterns):
 	paths= []
 	for rootdir, dirs, files in os.walk(dir_path):
@@ -30,7 +36,7 @@ def rmFile(path):
 	elif os.path.exists(path):
 		os.remove(path)
 
-# Removes only empty directories
+## Removes only empty directories
 def rmEmptyDir(path):
 	if os.path.exists(path) and not os.listdir(path):
 		os.rmdir(path)
@@ -52,6 +58,35 @@ def targetPath(p):
         return p.targetDir + "/lib" + p.name + ".a"
     else:
         fail("Unsupported project type: " + p.type)
+
+## Finds paths to dependencies of a file
+# Dependencies include all deps of deps
+# @note Performs file io and compiler invokation
+def findFileDependencies(path, p):
+	# Generate make-like dependency file
+	dep_file_path= (p.tempDir + "/" + str(p._compileHash) + "_"
+			+ filenamize(path) + ".d")
+	cmd= p.compiler + " -MM " + path + " -MF " + dep_file_path
+	run(cmd)
+
+	# Parse the file
+	deps= []
+	try:
+		contents= None
+		with open(dep_file_path, "rb") as file:
+			contents= file.read()
+		## @todo Support spaces in filenames :---D
+		for word in contents.split(" "):
+			if len(word) <= 1: # Handle `\`
+				continue
+			if word.endswith(":"): # Handle `file:`
+				continue
+			deps.append("./" + word.strip())
+	except Exception, e:
+		fail("Couldn't parse dependency file " + dep_file_path + ": " + str(e))
+
+	os.remove(dep_file_path)
+	return deps
 
 def objHash(obj):
 	return hashlib.md5(cPickle.dumps(obj)).hexdigest()[0:8]

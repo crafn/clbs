@@ -3,26 +3,44 @@ from cache import *
 from interface import *
 from util import *
 
-def run(cmd):
-    print(cmd)
-    ret= os.system(cmd)
-    if ret != 0:
-        fail("clbs: build failed")
-
 def buildProject(env, p, cache):
-    
+    mkDir(p.tempDir)
+
     # Find list of outdated source files
     outdated_src= []
     for src_path in p.src:
         if outdated(src_path, p._compileHash, cache):
             outdated_src.append(src_path)
-
+ 
     if len(outdated_src) == 0:
         log("unchanged " + p.name)
     else:
         log("building " + p.name)
+
+        # Update dependencies
+        for src_path in outdated_src:
+            if not p._compileHash in cache.compiles:
+                cache.compiles[p._compileHash]= { 
+                        "srcBuildTimes": {},
+                        "srcRevDeps": {}
+                 }
+            compile= cache.compiles[p._compileHash]
+            srcRevDeps= compile["srcRevDeps"]
+            dep_paths= findFileDependencies(src_path, p)
+            # Remove old dependencies
+            # Note that `srcRevDeps` has the reverse dependencies
+            for rev_src, rev_deps in srcRevDeps.items():
+                if rev_src in dep_paths:
+                    if src_path in rev_deps:
+                        rev_deps.remove(src_path) 
+            # Add new dependencies
+            for dep_path in dep_paths:
+                log("dep " + dep_path)
+                if not dep_path in srcRevDeps:
+                    srcRevDeps[dep_path]= []
+                srcRevDeps[dep_path].append(src_path)
+
         # Compile all source files to object files
-        mkDir(p.tempDir)
         for src_path in outdated_src:
             arg_str= ""
             arg_str += " -c" # No linking at this phase
@@ -37,14 +55,9 @@ def buildProject(env, p, cache):
             run(compile_cmd)
 
             # Add compilation to cache
-            if not p._compileHash in cache.compiles:
-                cache.compiles[p._compileHash]= { 
-                        "srcBuildTimes": {},
-                        "srcDeps": []
-                 }
-            cache.compiles[p._compileHash]["srcBuildTimes"][src_path]= \
-                modTime(src_path)
-
+            compile= cache.compiles[p._compileHash]
+            compile["srcBuildTimes"][src_path]= modTime(src_path)
+       
         # Link object files
         arg_str= ""
         for s in p.src:
@@ -76,7 +89,7 @@ def cleanProject(env, p, cache):
 
     rmFile(targetPath(p))
 
-def build(args):
+def runClbs(args):
     build_file_src= ""
     try:
         with open("build.clbs", "r") as file:
@@ -89,16 +102,18 @@ def build(args):
 
     target= "default"
     clean= False
+    resetcache= False
     upd= False
-    build= len(args) == 0
     for arg in args:
         if arg == "clean":
             clean= True
+        elif arg == "resetcache":
+            resetcache= True
         elif arg == "upd":
             upd= True
         else:
             target= arg
-            build= True
+    build= not clean and not resetcache and not upd
 
     env= Env()
     env.target= target
@@ -116,13 +131,18 @@ def build(args):
                 build_info.tempDir,
                 build_info.compiler,
                 build_info.archiver))
+        if clean:
+            cleanProject(env, build_info, cache)
+
+        if resetcache:
+            log("resetcache")
+            cache= Cache()
+
         if upd:
             updateCache(cache, build_info)
-
-        if not clean:
+ 
+        if build:
             buildProject(env, build_info, cache)
-        else:
-            cleanProject(env, build_info, cache)
     else:
         fail("buildInfo returned invalid type: " + type(build_info).__name__)
 

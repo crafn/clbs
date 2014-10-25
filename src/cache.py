@@ -4,11 +4,11 @@ from files import *
 from util import *
 from interface import *
 
-# Information preserved between builds
+## Information preserved between builds
 class Cache:
 	compiles= {} # Maps compileHash to dictionary containing:
 		# srcBuildTimes= {} # Maps src_path to last build time
-		# srcDeps= {} # Maps src_path to list of dependents
+		# srcRevDeps= {} # Maps src_path to list of dependents
 
 def cachePath():
 	return "./clbs.cache"
@@ -55,7 +55,7 @@ def outdated(src_path, cpl_hash, cache):
 		return True
 
 	compile= cache.compiles[cpl_hash]
-	# @todo Add checksum check
+	## @todo Add checksum check
 	if not src_path in compile["srcBuildTimes"]:
 		return True
 	if compile["srcBuildTimes"][src_path] < modTime(src_path):

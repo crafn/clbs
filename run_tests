@@ -18,7 +18,6 @@ if __name__ == "__main__":
 	for name, targets in tests:
 		os.chdir(name)
 		for target in targets:
-			# Build
 			ret= os.system("../../clbs " + target + " " + args)
 			if ret == 0:
 				log.append("  " + name + " " + target + " " + args)
