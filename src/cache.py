@@ -7,8 +7,8 @@ from interface import *
 ## Information preserved between builds
 class Cache:
 	compiles= {} # Maps compileHash to dictionary containing:
-		# srcBuildTimes= {} # Maps src_path to last build time
-		# srcRevDeps= {} # Maps src_path to list of dependents
+		# fileBuildTimes= {} # Maps file_path to last build time
+		# fileRevDeps= {} # Maps file_path to list of dependents
 
 def cachePath():
 	return "./clbs.cache"
@@ -43,21 +43,21 @@ def updateCache(cache, build_info):
 		for src_path in p.src:
 			t= modTime(objFilePath(src_path, p))
 			if t == 0:
-				if src_path in compile["srcBuildTimes"]:
-					del compile["srcBuildTimes"][src_path]
+				if src_path in compile["fileBuildTimes"]:
+					del compile["fileBuildTimes"][src_path]
 			else:
-				compile["srcBuildTimes"][src_path]= t
+				compile["fileBuildTimes"][src_path]= t
 	else:
 		fail("Unknown info type: " + build_info)
 
-def outdated(src_path, cpl_hash, cache):
+def outdated(file_path, cpl_hash, cache):
 	if not cpl_hash in cache.compiles:
 		return True
 
 	compile= cache.compiles[cpl_hash]
 	## @todo Add checksum check
-	if not src_path in compile["srcBuildTimes"]:
+	if not file_path in compile["fileBuildTimes"]:
 		return True
-	if compile["srcBuildTimes"][src_path] < modTime(src_path):
+	if compile["fileBuildTimes"][file_path] < modTime(file_path):
 		return True
 	return False

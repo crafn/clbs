@@ -1,5 +1,6 @@
 def buildInfo(env):
 	p= Project()
 	p.name= "manyfiles"
+	p.headers= findFiles("./src", ["*.hpp"])
 	p.src= findFiles("./src", ["*.cpp"])
 	return p

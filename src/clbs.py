@@ -6,42 +6,56 @@ from util import *
 def buildProject(env, p, cache):
     mkDir(p.tempDir)
 
-    # Find list of outdated source files
-    outdated_src= []
-    for src_path in p.src:
-        if outdated(src_path, p._compileHash, cache):
-            outdated_src.append(src_path)
+    # Find list of changed files
+    changed_files= []
+    for file_path in p.src + p.headers:
+        if outdated(file_path, p._compileHash, cache):
+            vlog("found change in " + file_path)
+            changed_files.append(file_path)
  
-    if len(outdated_src) == 0:
+    if len(changed_files) == 0:
         log("unchanged " + p.name)
     else:
         log("building " + p.name)
 
         # Update dependencies
-        for src_path in outdated_src:
+        for file_path in changed_files:
             if not p._compileHash in cache.compiles:
                 cache.compiles[p._compileHash]= { 
-                        "srcBuildTimes": {},
-                        "srcRevDeps": {}
+                        "fileBuildTimes": {},
+                        "fileRevDeps": {}
                  }
-            compile= cache.compiles[p._compileHash]
-            srcRevDeps= compile["srcRevDeps"]
-            dep_paths= findFileDependencies(src_path, p)
+            fileRevDeps= cache.compiles[p._compileHash]["fileRevDeps"]
+            if not file_path in fileRevDeps:
+                fileRevDeps[file_path]= []
+            dep_paths= findFileDependencies(file_path, p)
             # Remove old dependencies
-            # Note that `srcRevDeps` has the reverse dependencies
-            for rev_src, rev_deps in srcRevDeps.items():
-                if rev_src in dep_paths:
-                    if src_path in rev_deps:
-                        rev_deps.remove(src_path) 
+            # Note that `fileRevDeps` has the reverse dependencies
+            for rev_path, rev_deps in fileRevDeps.items():
+                if rev_path in dep_paths:
+                    if file_path in rev_deps:
+                        rev_deps.remove(file_path) 
             # Add new dependencies
             for dep_path in dep_paths:
-                log("dep " + dep_path)
-                if not dep_path in srcRevDeps:
-                    srcRevDeps[dep_path]= []
-                srcRevDeps[dep_path].append(src_path)
+                vlog("dep " + dep_path)
+                if not dep_path in fileRevDeps:
+                    fileRevDeps[dep_path]= []
+                fileRevDeps[dep_path].append(file_path)
 
-        # Compile all source files to object files
-        for src_path in outdated_src:
+        # Find the whole dependency cluster (including changed files)
+        dep_cluster= set()
+        fileRevDeps= cache.compiles[p._compileHash]["fileRevDeps"]
+        for file_path in changed_files:
+            dep_cluster.add(file_path)
+            for dep_path in fileRevDeps[file_path]:
+                dep_cluster.add(dep_path)
+
+        # Compile all source files in dep cluster
+        for file_path in dep_cluster:
+            if not file_path in p.src:
+                continue
+            src_path= file_path
+
             arg_str= ""
             arg_str += " -c" # No linking at this phase
             for f in p.flags:
@@ -54,9 +68,10 @@ def buildProject(env, p, cache):
             compile_cmd= p.compiler + arg_str
             run(compile_cmd)
 
-            # Add compilation to cache
+        # Update compilation times to cache
+        for file_path in dep_cluster:
             compile= cache.compiles[p._compileHash]
-            compile["srcBuildTimes"][src_path]= modTime(src_path)
+            compile["fileBuildTimes"][file_path]= modTime(file_path)
        
         # Link object files
         arg_str= ""
@@ -82,8 +97,8 @@ def cleanProject(env, p, cache):
         rmFile(obj_path)
         if p._compileHash in cache.compiles:
             compile= cache.compiles[p._compileHash]
-            if src_path in compile["srcBuildTimes"]:
-                del compile["srcBuildTimes"][src_path]
+            if src_path in compile["fileBuildTimes"]:
+                del compile["fileBuildTimes"][src_path]
             #del cache.compiles[p._compileHash]["srcDeps"][src_path]
     rmEmptyDir(p.tempDir)
 

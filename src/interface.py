@@ -8,6 +8,7 @@ class Env:
 ## Contains information on how to build a project
 class Project:
 	name= "default"
+	headers= [] ## Paths to header files
 	src= [] ## Paths to source files
 	flags= [] ## Flags to compiler
 	defines= [] ## Macro defines to compiler

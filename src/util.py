@@ -8,6 +8,9 @@ def fail(msg):
 def log(msg):
 	print("clbs: " + msg)
 
+def vlog(msg):
+	print("clbs: " + msg)
+
 def run(cmd):
     print(cmd)
     ret= os.system(cmd)
@@ -81,7 +84,10 @@ def findFileDependencies(path, p):
 				continue
 			if word.endswith(":"): # Handle `file:`
 				continue
-			deps.append("./" + word.strip())
+			dep= "./" + word.strip()
+			if dep == path:
+				continue # File obviously depends on itself
+			deps.append(dep)
 	except Exception, e:
 		fail("Couldn't parse dependency file " + dep_file_path + ": " + str(e))
 
