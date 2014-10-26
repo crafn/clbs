@@ -3,24 +3,25 @@ from cache import *
 from interface import *
 from util import *
 
-def buildProject(env, p, cache, force_build):
+## Builds outdated parts of a project
+# @param b_outdated_files A set of paths to outdated files in the whole build
+# @param force_build Needed in case of rebuilt lib with only impl changes
+def buildProject(env, p, cache, b_outdated_files, force_build):
     mkDir(p.tempDir)
 
-    # Find list of changed files
-    changed_files= []
-    for file_path in p.src + p.headers:
-        if outdated(file_path, p._compileHash, cache):
-            vlog("found change in " + file_path)
-            changed_files.append(file_path)
+    outdated_files= []
+    for path in b_outdated_files:
+        if path in p.src or path in p.headers: 
+            outdated_files.append(path)
 
-    if len(changed_files) == 0 and not force_build:
+    if len(outdated_files) == 0 and not force_build:
         log("unchanged " + p.name)
         return False
     else:
         log("building " + p.name)
 
         # Update dependencies
-        for file_path in changed_files:
+        for file_path in outdated_files:
             if not p._compileHash in cache.compiles:
                 cache.compiles[p._compileHash]= { 
                         "fileBuildTimes": {},
@@ -43,10 +44,11 @@ def buildProject(env, p, cache, force_build):
                     fileRevDeps[dep_path]= []
                 fileRevDeps[dep_path].append(file_path)
 
-        # Find the whole dependency cluster (including changed files)
+        # Find the whole dependency cluster (including outdated files)
+        ## @todo Exclude files outside project
         dep_cluster= set()
         fileRevDeps= cache.compiles[p._compileHash]["fileRevDeps"]
-        for file_path in changed_files:
+        for file_path in outdated_files:
             dep_cluster.add(file_path)
             for dep_path in fileRevDeps[file_path]:
                 dep_cluster.add(dep_path)
@@ -59,14 +61,14 @@ def buildProject(env, p, cache, force_build):
 
             arg_str= ""
             arg_str += " -c" # No linking at this phase
+            arg_str += " " + src_path
+            arg_str += " -o " + objFilePath(src_path, p)
             for f in p.flags:
                 arg_str += " -" + f
             for i in p.includeDirs:
                 arg_str += " -I" + i
             for d in p.defines:
                 arg_str += " -D" + d
-            arg_str += " " + src_path
-            arg_str += " -o " + objFilePath(src_path, p)
 
             compile_cmd= p.compiler + arg_str
             run(compile_cmd)
@@ -93,18 +95,19 @@ def buildProject(env, p, cache, force_build):
             run(p.archiver + arg_str)
         else:
             fail("Unsupported project type: " + p.type)
-    return True
 
-def buildWithDeps(env, p, cache, already_built= set()):
+        return True
+
+def buildWithDeps(env, p, cache, b_outdated, already_built= set()):
     already_built.add(p)
     force_build= False
     for dep_p in p.deps:
         if dep_p in already_built:
             continue
-        dep_changed= buildWithDeps(env, dep_p, cache, already_built)
+        dep_changed= buildWithDeps(env, dep_p, cache, b_outdated, already_built)
         if dep_changed:
             force_build= True
-    return buildProject(env, p, cache, force_build)
+    return buildProject(env, p, cache, b_outdated, force_build)
 
 def cleanProject(env, p, cache):
     log("cleaning " + p.name)
@@ -166,7 +169,8 @@ def runClbs(args):
     findProjectDepCluster(p_dep_cluster, project) 
     for p in p_dep_cluster:
         p._compileHash= objHash(
-            (p.flags,
+            (p.name,
+            p.flags,
             p.defines,
             p.includeDirs,
             p.libDirs,
@@ -176,7 +180,24 @@ def runClbs(args):
             p.archiver))
 
     if build:
-        buildWithDeps(env, project, cache)
+        # Find all (directly or indirectly) outdated files of build
+        b_outdated_files= set()
+        for p in p_dep_cluster:
+            for file_path in p.src + p.headers:
+                if not outdated(file_path, p._compileHash, cache):
+                    continue
+                vlog("found change in " + file_path)
+                b_outdated_files.add(file_path)
+
+                # Add also every file depending on this file
+                for compile in cache.compiles.values():
+                    rev_deps= compile["fileRevDeps"]
+                    if not file_path in rev_deps:
+                        continue
+                    for dep_path in rev_deps[file_path]:
+                        b_outdated_files.add(dep_path)
+
+        buildWithDeps(env, project, cache, b_outdated_files)
     elif resetcache:
         log("resetcache")
         cache= Cache()

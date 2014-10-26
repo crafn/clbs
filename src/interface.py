@@ -23,5 +23,5 @@ class Project:
 	archiver= "ar"
 	type= "exe" ## "exe" or "lib"
 	# Private
-	_compileHash= 0 # Hash from compiler command configuration
+	_compileHash= 0 # Unique for every project and compile cmd cfg
 

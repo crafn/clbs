@@ -8,6 +8,7 @@ def fail(msg):
 def log(msg):
 	print("clbs: " + msg)
 
+## Verbose log
 def vlog(msg):
 	print("clbs: " + msg)
 
@@ -70,6 +71,8 @@ def findFileDependencies(path, p):
 	dep_file_path= (p.tempDir + "/" + str(p._compileHash) + "_"
 			+ filenamize(path) + ".d")
 	cmd= p.compiler + " -MM " + path + " -MF " + dep_file_path
+	for i in p.includeDirs:
+		cmd += " -I" + i
 	run(cmd)
 
 	# Parse the file
