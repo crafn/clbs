@@ -22,6 +22,8 @@ def buildProject(env, p, cache, b_outdated_files, force_build):
 
         # Update dependencies
         for file_path in outdated_files:
+            if not file_path in p.src:
+                continue
             if not p._compileHash in cache.compiles:
                 cache.compiles[p._compileHash]= { 
                         "fileBuildTimes": {},
