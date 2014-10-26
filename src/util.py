@@ -20,6 +20,8 @@ def run(cmd):
 
 ## Finds paths to files in dir tree
 def findFiles(dir_path, patterns):
+	if not isinstance(patterns, list):
+		patterns= [patterns]
 	paths= []
 	for rootdir, dirs, files in os.walk(dir_path):
 		for p in patterns:
