@@ -83,11 +83,12 @@ def findFileDependencies(path, p):
 			contents= file.read()
 		## @todo Support spaces in filenames :---D
 		for word in contents.split(" "):
+			word= word.strip()
 			if len(word) <= 1: # Handle `\`
 				continue
 			if word.endswith(":"): # Handle `file:`
 				continue
-			dep= "./" + word.strip()
+			dep= "./" + word
 			if dep == path:
 				continue # File obviously depends on itself
 			deps.append(dep)
