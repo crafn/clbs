@@ -3,7 +3,7 @@ from cache import *
 from interface import *
 from util import *
 
-def buildProject(env, p, cache):
+def buildProject(env, p, cache, force_build):
     mkDir(p.tempDir)
 
     # Find list of changed files
@@ -12,9 +12,10 @@ def buildProject(env, p, cache):
         if outdated(file_path, p._compileHash, cache):
             vlog("found change in " + file_path)
             changed_files.append(file_path)
- 
-    if len(changed_files) == 0:
+
+    if len(changed_files) == 0 and not force_build:
         log("unchanged " + p.name)
+        return False
     else:
         log("building " + p.name)
 
@@ -92,6 +93,18 @@ def buildProject(env, p, cache):
             run(p.archiver + arg_str)
         else:
             fail("Unsupported project type: " + p.type)
+    return True
+
+def buildWithDeps(env, p, cache, already_built= set()):
+    already_built.add(p)
+    force_build= False
+    for dep_p in p.deps:
+        if dep_p in already_built:
+            continue
+        dep_changed= buildWithDeps(env, dep_p, cache, already_built)
+        if dep_changed:
+            force_build= True
+    return buildProject(env, p, cache, force_build)
 
 def cleanProject(env, p, cache):
     log("cleaning " + p.name)
@@ -106,6 +119,13 @@ def cleanProject(env, p, cache):
     rmEmptyDir(p.tempDir)
 
     rmFile(targetPath(p))
+
+## Internal func of runClbs
+def findProjectDepCluster(result, project):
+    for p in project.deps:
+        findProjectDepCluster(result, p) # Deepest deps first
+    if not project in result:
+        result.append(project)
 
 def runClbs(args):
     build_file_src= ""
@@ -141,25 +161,29 @@ def runClbs(args):
     cache= loadCache()
     atexit.register(lambda: writeCache(cache))
 
-    project._compileHash= objHash(
-            (project.flags,
-            project.defines,
-            project.includeDirs,
-            project.libDirs,
-            project.links,
-            project.tempDir,
-            project.compiler,
-            project.archiver))
-    if clean:
-        cleanProject(env, project, cache)
-
-    if resetcache:
-        log("resetcache")
-        cache= Cache()
-
-    if upd:
-        updateCache(cache, project)
+    # Preprocess all projects in dep cluster
+    p_dep_cluster= []
+    findProjectDepCluster(p_dep_cluster, project) 
+    for p in p_dep_cluster:
+        p._compileHash= objHash(
+            (p.flags,
+            p.defines,
+            p.includeDirs,
+            p.libDirs,
+            p.links,
+            p.tempDir,
+            p.compiler,
+            p.archiver))
 
     if build:
-        buildProject(env, project, cache)
+        buildWithDeps(env, project, cache)
+    elif resetcache:
+        log("resetcache")
+        cache= Cache()
+    else:
+        for p in p_dep_cluster:
+            if clean:
+                cleanProject(env, p, cache)
+            if upd:
+                updateCache(cache, p)
 
