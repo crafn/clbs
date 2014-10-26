@@ -1,6 +1,6 @@
-def buildInfo(env):
-	if env.target == "default":
-		env.target= "debug"
+def buildInfo(env, target):
+	if target == "default":
+		target= "debug"
 	build = {
 		"debug": {
 			"defines": [],
@@ -12,8 +12,8 @@ def buildInfo(env):
 		}
 	}
 	p= Project()
-	p.name= "hello_" + env.target
+	p.name= "hello_" + target
 	p.src= [ "./src/main.cpp" ]
-	p.flags= build[env.target]["flags"]
-	p.defines= build[env.target]["defines"]
+	p.flags= build[target]["flags"]
+	p.defines= build[target]["defines"]
 	return p

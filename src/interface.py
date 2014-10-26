@@ -1,7 +1,6 @@
 ## Build environment
 # Passed to buildInfo(..) in build.clbs
 class Env:
-    target= "default" ## Name supplied by command line
     os= "" ## "windows" or "linux"
     arch= "x64" ## @todo Auto-detect
 

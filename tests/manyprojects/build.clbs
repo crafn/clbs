@@ -1,4 +1,4 @@
-def buildInfo(env):
+def buildInfo(env, target):
 	a_dir= "./a/"
 	a= Project()
 	a.name= "a_library"

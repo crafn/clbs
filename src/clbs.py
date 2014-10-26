@@ -157,9 +157,8 @@ def runClbs(args):
     build= not clean and not resetcache and not upd
 
     env= Env()
-    env.target= target
     env.os= platform.system().lower()
-    project= buildInfo(env)
+    project= buildInfo(env, target)
 
     cache= loadCache()
     atexit.register(lambda: writeCache(cache))
