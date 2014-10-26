@@ -72,11 +72,6 @@ def buildProject(env, p, cache, b_outdated_files, force_build):
 
             compile_cmd= p.compiler + arg_str
             run(compile_cmd)
-
-        # Update compilation times to cache
-        for file_path in dep_cluster:
-            compile= cache.compiles[p._compileHash]
-            compile["fileBuildTimes"][file_path]= modTime(file_path)
  
         # Link object files
         arg_str= ""
@@ -87,6 +82,7 @@ def buildProject(env, p, cache, b_outdated_files, force_build):
         for l in p.links:
             arg_str += " -l" + l
 
+        mkDir(p.targetDir)
         if p.type == "exe":
             arg_str += " -o " + targetPath(p)
             run(p.compiler + arg_str)
@@ -95,6 +91,11 @@ def buildProject(env, p, cache, b_outdated_files, force_build):
             run(p.archiver + arg_str)
         else:
             fail("Unsupported project type: " + p.type)
+
+        # Update compilation times to cache
+        for file_path in dep_cluster:
+            compile= cache.compiles[p._compileHash]
+            compile["fileBuildTimes"][file_path]= modTime(file_path)
 
         return True
 

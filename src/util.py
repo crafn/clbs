@@ -16,7 +16,7 @@ def run(cmd):
     print(cmd)
     ret= os.system(cmd)
     if ret != 0:
-        fail("clbs: build failed")
+        fail("build failed")
 
 ## Finds paths to files in dir tree
 def findFiles(dir_path, patterns):
@@ -33,8 +33,12 @@ def filenamize(str):
 	return "".join([x if x.isalnum() else "_" for x in str])
 
 def mkDir(path):
-	if not os.path.exists(path):
-		os.mkdir(path)
+	if os.path.exists(path):
+		return
+	try:
+		os.makedirs(path)
+	except Exception, e:
+		fail("mkDir(" + path + ") failed: " + str(e)) 
 
 def rmFile(path):
 	if fnmatch.fnmatch(path, "*.c*"):
@@ -73,6 +77,8 @@ def findFileDependencies(path, p):
 	dep_file_path= (p.tempDir + "/" + str(p._compileHash) + "_"
 			+ filenamize(path) + ".d")
 	cmd= p.compiler + " -MM " + path + " -MF " + dep_file_path
+	for f in p.flags:
+		cmd += " -" + f
 	for i in p.includeDirs:
 		cmd += " -I" + i
 	run(cmd)
