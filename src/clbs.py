@@ -60,6 +60,8 @@ def buildProject(env, p, cache):
             arg_str += " -c" # No linking at this phase
             for f in p.flags:
                 arg_str += " -" + f
+            for i in p.includeDirs:
+                arg_str += " -I" + i
             for d in p.defines:
                 arg_str += " -D" + d
             arg_str += " " + src_path
@@ -72,11 +74,13 @@ def buildProject(env, p, cache):
         for file_path in dep_cluster:
             compile= cache.compiles[p._compileHash]
             compile["fileBuildTimes"][file_path]= modTime(file_path)
-       
+ 
         # Link object files
         arg_str= ""
         for s in p.src:
             arg_str += " " + objFilePath(s, p)
+        for l in p.libDirs:
+            arg_str += " -L" + l
         for l in p.links:
             arg_str += " -l" + l
 
@@ -99,7 +103,6 @@ def cleanProject(env, p, cache):
             compile= cache.compiles[p._compileHash]
             if src_path in compile["fileBuildTimes"]:
                 del compile["fileBuildTimes"][src_path]
-            #del cache.compiles[p._compileHash]["srcDeps"][src_path]
     rmEmptyDir(p.tempDir)
 
     rmFile(targetPath(p))
@@ -133,31 +136,30 @@ def runClbs(args):
     env= Env()
     env.target= target
     env.os= platform.system().lower()
-    build_info= buildInfo(env)
+    project= buildInfo(env)
 
     cache= loadCache()
     atexit.register(lambda: writeCache(cache))
 
-    if isinstance(build_info, Project):
-        build_info._compileHash= objHash(
-                (build_info.flags,
-                build_info.defines,
-                build_info.links,
-                build_info.tempDir,
-                build_info.compiler,
-                build_info.archiver))
-        if clean:
-            cleanProject(env, build_info, cache)
+    project._compileHash= objHash(
+            (project.flags,
+            project.defines,
+            project.includeDirs,
+            project.libDirs,
+            project.links,
+            project.tempDir,
+            project.compiler,
+            project.archiver))
+    if clean:
+        cleanProject(env, project, cache)
 
-        if resetcache:
-            log("resetcache")
-            cache= Cache()
+    if resetcache:
+        log("resetcache")
+        cache= Cache()
 
-        if upd:
-            updateCache(cache, build_info)
- 
-        if build:
-            buildProject(env, build_info, cache)
-    else:
-        fail("buildInfo returned invalid type: " + type(build_info).__name__)
+    if upd:
+        updateCache(cache, project)
+
+    if build:
+        buildProject(env, project, cache)
 

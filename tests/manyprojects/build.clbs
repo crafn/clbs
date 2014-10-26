@@ -1,0 +1,17 @@
+def buildInfo(env):
+	a_dir= "./a/"
+	a= Project()
+	a.name= "a_library"
+	a.headers= [ a_dir + "a.hpp" ]
+	a.src= [ a_dir + "a.cpp" ]
+	a.type= "lib"
+
+	b= Project()
+	b.name= "b_executable"
+	b.src= [ "./b/main.cpp" ]
+	b.deps= [ a ]
+	b.links= [ a.name ]
+	b.includeDirs= [ a_dir ]
+	b.libDirs= [ a.targetDir ]
+	b.type= "exe"
+	return b
