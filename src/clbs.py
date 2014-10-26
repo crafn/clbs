@@ -52,6 +52,8 @@ def buildProject(env, p, cache, b_outdated_files, force_build):
         fileRevDeps= cache.compiles[p._compileHash]["fileRevDeps"]
         for file_path in outdated_files:
             dep_cluster.add(file_path)
+            if not file_path in fileRevDeps:
+                continue
             for dep_path in fileRevDeps[file_path]:
                 dep_cluster.add(dep_path)
 
