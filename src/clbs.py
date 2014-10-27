@@ -46,19 +46,8 @@ def buildProject(env, p, cache, b_outdated_files, force_build):
                     fileRevDeps[dep_path]= []
                 fileRevDeps[dep_path].append(file_path)
 
-        # Find the whole dependency cluster (including outdated files)
-        ## @todo Exclude files outside project
-        dep_cluster= set()
-        fileRevDeps= cache.compiles[p._compileHash]["fileRevDeps"]
-        for file_path in outdated_files:
-            dep_cluster.add(file_path)
-            if not file_path in fileRevDeps:
-                continue
-            for dep_path in fileRevDeps[file_path]:
-                dep_cluster.add(dep_path)
-
         # Compile all source files in dep cluster
-        for file_path in dep_cluster:
+        for file_path in outdated_files:
             if not file_path in p.src:
                 continue
             src_path= file_path
@@ -97,7 +86,7 @@ def buildProject(env, p, cache, b_outdated_files, force_build):
             fail("Unsupported project type: " + p.type)
 
         # Update compilation times to cache
-        for file_path in dep_cluster:
+        for file_path in outdated_files:
             compile= cache.compiles[p._compileHash]
             compile["fileBuildTimes"][file_path]= modTime(file_path)
 
@@ -184,7 +173,7 @@ def runClbs(args):
             p.archiver))
 
     if build:
-        # Find all (directly or indirectly) outdated files of build
+        # Find all (directly or indirectly) outdated files of the build
         b_outdated_files= set()
         for p in p_dep_cluster:
             for file_path in p.src + p.headers:
