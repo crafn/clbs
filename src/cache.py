@@ -34,18 +34,6 @@ def loadCache():
 	else:
 		return cache
 
-# Makes cache to match with files on disk
-def updateCache(cache, p):
-	compile= cache.compiles[p._compileHash]
-	log("updating " + p.name)
-	for src_path in p.src:
-		t= modTime(objFilePath(src_path, p))
-		if t == 0:
-			if src_path in compile["fileBuildTimes"]:
-				del compile["fileBuildTimes"][src_path]
-		else:
-			compile["fileBuildTimes"][src_path]= t
-
 def outdated(file_path, cpl_hash, cache):
 	if not cpl_hash in cache.compiles:
 		return True

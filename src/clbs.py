@@ -9,6 +9,7 @@ from util import *
 def buildProject(env, p, cache, b_outdated_files, force_build):
     mkDir(p.tempDir)
 
+    # Explicitly or implicitly outdated files of the project
     outdated_files= []
     for path in b_outdated_files:
         if path in p.src or path in p.headers: 
@@ -19,38 +20,49 @@ def buildProject(env, p, cache, b_outdated_files, force_build):
         return False
     else:
         log("building " + p.name)
+        if not p._compileHash in cache.compiles:
+            cache.compiles[p._compileHash]= { 
+                "fileBuildTimes": {},
+                "fileRevDeps": {}
+            }
+        compile= cache.compiles[p._compileHash]
 
-        # Update dependencies
+        # Set headers to updated and sources to outdated
+        # This ensures that if build fails halfways, the correct source
+        # files will be compiled on next build
+        for file_path in outdated_files:
+            cpl_time= 0
+            if file_path in p.headers:
+                cpl_time= modTime(file_path)
+            compile["fileBuildTimes"][file_path]= cpl_time
+
+        # Compile files
         for file_path in outdated_files:
             if not file_path in p.src:
                 continue
-            if not p._compileHash in cache.compiles:
-                cache.compiles[p._compileHash]= { 
-                        "fileBuildTimes": {},
-                        "fileRevDeps": {}
-                 }
-            fileRevDeps= cache.compiles[p._compileHash]["fileRevDeps"]
-            if not file_path in fileRevDeps:
-                fileRevDeps[file_path]= []
-            dep_paths= findFileDependencies(file_path, p)
+            src_path= file_path
+
+            ### Update dependencies ###
+
+            fileRevDeps= compile["fileRevDeps"]
+            if not src_path in fileRevDeps:
+                fileRevDeps[src_path]= []
+            ## @todo Find and compile with a single compiler invokation
+            dep_paths= findFileDependencies(src_path, p)
             # Remove old dependencies
             # Note that `fileRevDeps` has the reverse dependencies
             for rev_path, rev_deps in fileRevDeps.items():
                 if rev_path in dep_paths:
-                    if file_path in rev_deps:
-                        rev_deps.remove(file_path) 
+                    if src_path in rev_deps:
+                        rev_deps.remove(src_path) 
             # Add new dependencies
             for dep_path in dep_paths:
                 vlog("dep " + dep_path)
                 if not dep_path in fileRevDeps:
                     fileRevDeps[dep_path]= []
-                fileRevDeps[dep_path].append(file_path)
+                fileRevDeps[dep_path].append(src_path)
 
-        # Compile all source files in dep cluster
-        for file_path in outdated_files:
-            if not file_path in p.src:
-                continue
-            src_path= file_path
+            ### Compile ###
 
             arg_str= ""
             arg_str += " -c" # No linking at this phase
@@ -65,6 +77,10 @@ def buildProject(env, p, cache, b_outdated_files, force_build):
 
             compile_cmd= p.compiler + arg_str
             run(compile_cmd)
+
+            ### Update cache ###
+
+            compile["fileBuildTimes"][src_path]= modTime(src_path)
  
         # Link object files
         arg_str= ""
@@ -85,10 +101,7 @@ def buildProject(env, p, cache, b_outdated_files, force_build):
         else:
             fail("Unsupported project type: " + p.type)
 
-        # Update compilation times to cache
-        for file_path in outdated_files:
-            compile= cache.compiles[p._compileHash]
-            compile["fileBuildTimes"][file_path]= modTime(file_path)
+        ## @todo Add target to fileBuildTimes
 
         return True
 
@@ -120,6 +133,8 @@ def cleanProject(env, p, cache):
 ## Internal func of runClbs
 def findProjectDepCluster(result, project):
     for p in project.deps:
+        if p == project:
+            fail("Project depends on itself: " + project.name)
         findProjectDepCluster(result, p) # Deepest deps first
     if not project in result:
         result.append(project)
@@ -138,17 +153,14 @@ def runClbs(args):
     target= "default"
     clean= False
     resetcache= False
-    upd= False
     for arg in args:
         if arg == "clean":
             clean= True
         elif arg == "resetcache":
             resetcache= True
-        elif arg == "upd":
-            upd= True
         else:
             target= arg
-    build= not clean and not resetcache and not upd
+    build= not clean and not resetcache
 
     env= Env()
     env.os= platform.system().lower()
@@ -198,6 +210,4 @@ def runClbs(args):
         for p in p_dep_cluster:
             if clean:
                 cleanProject(env, p, cache)
-            if upd:
-                updateCache(cache, p)
 
