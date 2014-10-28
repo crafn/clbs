@@ -1,4 +1,4 @@
-import atexit, os, platform, sys
+import atexit, os, platform, sys, time
 from cache import *
 from interface import *
 from util import *
@@ -165,6 +165,9 @@ def findProjectDepCluster(result, project):
         result.append(project)
 
 def runClbs(args):
+    timer= time.time()
+    atexit.register(lambda: log(str(round(time.time() - timer, 2)) + "s"))
+
     build_file_src= ""
     try:
         with open("build.clbs", "r") as file:
