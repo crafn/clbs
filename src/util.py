@@ -29,6 +29,20 @@ def findFiles(dir_path, patterns):
 				paths.append(rootdir + "/" + f)
 	return paths
 
+def findNotMatching(lst, patterns):
+	if not isinstance(patterns, list):
+		patterns= [patterns]
+	result= []
+	for s in lst:
+		match= False
+		for p in patterns:
+			if fnmatch.fnmatch(s, p):
+				match= True
+				break
+		if not match:
+			result.append(s)
+	return result
+
 def filenamize(str):
 	return "".join([x if x.isalnum() else "_" for x in str])
 
@@ -81,6 +95,8 @@ def findFileDependencies(path, p):
 		cmd += " -" + f
 	for i in p.includeDirs:
 		cmd += " -I" + i
+	for d in p.defines:
+		cmd += " -D" + d
 	run(cmd)
 
 	# Parse the file
