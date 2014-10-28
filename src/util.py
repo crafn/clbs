@@ -13,7 +13,7 @@ def vlog(msg):
 	print("clbs: " + msg)
 
 def run(cmd):
-    print(cmd)
+    vlog(cmd)
     ret= os.system(cmd)
     if ret != 0:
         fail("build failed")
@@ -86,3 +86,9 @@ def targetPath(p):
 def objHash(obj):
 	return hashlib.md5(cPickle.dumps(obj)).hexdigest()[0:8]
 
+def clearQueue(q):
+	while not q.empty():
+		try:
+			q.get_nowait()
+		except:
+			pass
