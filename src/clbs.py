@@ -42,13 +42,56 @@ def buildProject(env, p, cache, b_outdated_files, force_build):
                 continue
             src_path= file_path
 
-            ### Update dependencies ###
+            ### Compile ###
+
+            arg_str= ""
+            arg_str += " -c" # No linking at this phase
+            arg_str += " " + src_path
+            arg_str += " -MMD" # Dep generation
+            arg_str += " -o " + objFilePath(src_path, p)
+            for f in p.flags:
+                arg_str += " -" + f
+            for i in p.includeDirs:
+                arg_str += " -I" + i
+            for d in p.defines:
+                arg_str += " -D" + d
+
+            compile_cmd= p.compiler + arg_str
+            run(compile_cmd)
+
+            ### Parse dependency file ###
+
+	    dep_file_path= (p.tempDir + "/" + str(p._compileHash) + "_"
+			+ filenamize(src_path) + ".d")
+            dep_paths= []
+            try:
+                    contents= None
+                    with open(dep_file_path, "rb") as file:
+                            contents= file.read()
+                    ## @todo Support spaces in filenames :---D
+                    for word in contents.split(" "):
+                            word= word.strip()
+                            if len(word) <= 1: # Handle `\`
+                                    continue
+                            if word.endswith(":"): # Handle `file:`
+                                    continue
+                            dep= "./" + word
+                            if dep == path:
+                                    continue # File obviously depends on itself
+                            dep_paths.append(dep)
+            except Exception, e:
+                    fail("Couldn't parse dependency file " +
+                            dep_file_path + ": " + str(e))
+            os.remove(dep_file_path)
+
+            ### Update cache ###
+
+            compile["fileBuildTimes"][src_path]= modTime(src_path)
 
             fileRevDeps= compile["fileRevDeps"]
             if not src_path in fileRevDeps:
                 fileRevDeps[src_path]= []
-            ## @todo Find and compile with a single compiler invokation
-            dep_paths= findFileDependencies(src_path, p)
+
             # Remove old dependencies
             # Note that `fileRevDeps` has the reverse dependencies
             for rev_path, rev_deps in fileRevDeps.items():
@@ -62,26 +105,8 @@ def buildProject(env, p, cache, b_outdated_files, force_build):
                     fileRevDeps[dep_path]= []
                 fileRevDeps[dep_path].append(src_path)
 
-            ### Compile ###
 
-            arg_str= ""
-            arg_str += " -c" # No linking at this phase
-            arg_str += " " + src_path
-            arg_str += " -o " + objFilePath(src_path, p)
-            for f in p.flags:
-                arg_str += " -" + f
-            for i in p.includeDirs:
-                arg_str += " -I" + i
-            for d in p.defines:
-                arg_str += " -D" + d
 
-            compile_cmd= p.compiler + arg_str
-            run(compile_cmd)
-
-            ### Update cache ###
-
-            compile["fileBuildTimes"][src_path]= modTime(src_path)
- 
         # Link object files
         arg_str= ""
         for s in p.src:
