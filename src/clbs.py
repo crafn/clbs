@@ -85,6 +85,7 @@ def buildProject(env, p, cache, b_outdated_files, job_count, force_build):
             src_paths.append(src_path)
 
         # Start compilation jobs
+        ## @todo Parallelize compiles between projects
         out_queue= mp_mgr.Queue(maxsize= len(src_paths))
         compiler_pool= mp.Pool(processes= job_count)
         for x in range(job_count):
@@ -169,15 +170,18 @@ def buildProject(env, p, cache, b_outdated_files, job_count, force_build):
         for l in p.links:
             if isinstance(l, str):
                 arg_str += " -l" + l
-            else:
-                if not isinstance(l, Project):
-                    fail("link is not a str or Project")
-                # l is a project, add requested object files
+            elif isinstance(l, Project):
                 if l.type != "obj":
                     fail("Only projects of type \"obj\" can be links")
                 for s in l.src:
                     arg_str += " " + objFilePath(s, l)
-
+            elif isinstance(l, list): # Link group
+                arg_str += " -Wl,--start-group"
+                for member_l in l:
+                    arg_str += " -l" + member_l
+                arg_str += " -Wl,--end-group"
+            else:
+                fail("Invalid value in `link`: " + l)
 
         mkDir(p.targetDir)
         if p.type == "exe":
