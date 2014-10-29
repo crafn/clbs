@@ -9,17 +9,19 @@ def compilerJob(out_queue, in_queue):
     while True:
         id= None
         cmd= None
+        msg= None
         try:
             input= in_queue.get_nowait()
             id= input[0]
             cmd= input[1]
+            msg= input[2]
         except Queue.Empty:
             return
         except Exception, e:
             print("clbs: internal error: " + str(e))
             sys.exit(1)
 
-        print(cmd)
+        print("clbs: " + msg)
         ret= os.system(cmd)
         out_queue.put((id, ret))
         
@@ -76,7 +78,10 @@ def buildProject(env, p, cache, b_outdated_files, job_count, force_build):
             for d in p.defines:
                 arg_str += " -D" + d
             compile_cmd= p.compiler + arg_str
-            in_queue.put((len(src_paths), compile_cmd))
+            msg= src_path
+            if env.verbose:
+                msg += "\n" + compile_cmd
+            in_queue.put((len(src_paths), compile_cmd, msg))
             src_paths.append(src_path)
 
         # Start compilation jobs
@@ -84,7 +89,9 @@ def buildProject(env, p, cache, b_outdated_files, job_count, force_build):
         out_queue= mp_mgr.Queue(maxsize= len(src_paths))
         compiler_pool= mp.Pool(processes= job_count)
         for x in range(job_count):
-            compiler_pool.apply_async(compilerJob, (out_queue, in_queue))
+            compiler_pool.apply_async(
+                    compilerJob,
+                    (out_queue, in_queue))
         compiler_pool.close()
 
         # Read output from compilation jobs
@@ -144,12 +151,12 @@ def buildProject(env, p, cache, b_outdated_files, job_count, force_build):
                         rev_deps.remove(src_path) 
             # Add new dependencies
             for dep_path in dep_paths:
-                #vlog("dep " + dep_path)
                 if not dep_path in fileRevDeps:
                     fileRevDeps[dep_path]= []
                 fileRevDeps[dep_path].append(src_path)
 
         # Link object files
+        log("linking " + p.name)
 
         arg_str= ""
         for s in p.src:
@@ -162,10 +169,14 @@ def buildProject(env, p, cache, b_outdated_files, job_count, force_build):
         mkDir(p.targetDir)
         if p.type == "exe":
             arg_str += " -o " + targetPath(p)
-            run(p.compiler + arg_str)
+            cmd= p.compiler + arg_str
+            clog(env.verbose, cmd)
+            run(cmd)
         elif p.type == "lib":
             arg_str= " rcs " + targetPath(p) + " " + arg_str
-            run(p.archiver + arg_str)
+            cmd= p.archiver + arg_str
+            clog(env.verbose, cmd)
+            run(cmd)
         else:
             fail("Unsupported project type: " + p.type)
 
@@ -222,6 +233,9 @@ def runClbs(args):
     # @todo Some restrictions!
     exec build_file_src in globals(), locals()
 
+    env= Env()
+    env.os= platform.system().lower()
+
     # Parse args
     target= "default"
     clean= False
@@ -232,14 +246,14 @@ def runClbs(args):
             clean= True
         elif arg == "resetcache":
             resetcache= True
-        elif arg[:2] == "-j":
+        elif len(arg) > 2 and arg[:2] == "-j":
             job_count= int(arg[2:])
+        elif arg == "-v":
+            env.verbose= True
         else:
             target= arg
     build= not clean and not resetcache
 
-    env= Env()
-    env.os= platform.system().lower()
     project= buildInfo(env, target)
 
     cache= loadCache()
@@ -266,7 +280,7 @@ def runClbs(args):
             for file_path in p.src + p.headers:
                 if not outdated(file_path, p._compileHash, cache):
                     continue
-                vlog("found change in " + file_path)
+                clog(env.verbose, "found change in " + file_path)
                 b_outdated_files.add(file_path)
 
                 # Add also every file depending on this file

@@ -8,12 +8,12 @@ def fail(msg):
 def log(msg):
 	print("clbs: " + msg)
 
-## Verbose log
-def vlog(msg):
-	print("clbs: " + msg)
+## Conditional log
+def clog(condition, msg):
+	if condition:
+		print("clbs: " + msg)
 
 def run(cmd):
-    vlog(cmd)
     ret= os.system(cmd)
     if ret != 0:
         fail("build failed")

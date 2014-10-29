@@ -4,6 +4,7 @@ class Env:
 	def __init__(self):
 		self.os= "" ## "windows" or "linux"
 		self.arch= "x64" ## @todo Auto-detect
+		self.verbose= False
 
 ## Contains information on how to build a project
 # `buildInfo` in build.clbs should return a `Project` object
