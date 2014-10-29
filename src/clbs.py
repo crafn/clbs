@@ -85,7 +85,6 @@ def buildProject(env, p, cache, b_outdated_files, job_count, force_build):
             src_paths.append(src_path)
 
         # Start compilation jobs
-        ## @todo job count from command line
         out_queue= mp_mgr.Queue(maxsize= len(src_paths))
         compiler_pool= mp.Pool(processes= job_count)
         for x in range(job_count):
@@ -155,7 +154,11 @@ def buildProject(env, p, cache, b_outdated_files, job_count, force_build):
                     fileRevDeps[dep_path]= []
                 fileRevDeps[dep_path].append(src_path)
 
-        # Link object files
+        if p.type == "obj":
+            if len(p.links) != 0:
+                fail("@todo links for \"obj\" projects")
+            return True # Create only object files
+
         log("linking " + p.name)
 
         arg_str= ""
@@ -164,7 +167,17 @@ def buildProject(env, p, cache, b_outdated_files, job_count, force_build):
         for l in p.libDirs:
             arg_str += " -L" + l
         for l in p.links:
-            arg_str += " -l" + l
+            if isinstance(l, str):
+                arg_str += " -l" + l
+            else:
+                if not isinstance(l, Project):
+                    fail("link is not a str or Project")
+                # l is a project, add requested object files
+                if l.type != "obj":
+                    fail("Only projects of type \"obj\" can be links")
+                for s in l.src:
+                    arg_str += " " + objFilePath(s, l)
+
 
         mkDir(p.targetDir)
         if p.type == "exe":
@@ -194,6 +207,8 @@ def buildWithDeps(env, p, cache, b_outdated, job_count, already_built= set()):
                 b_outdated, job_count, already_built)
         if dep_changed:
             force_build= True
+    if not os.path.exists(targetPath(p)):
+        force_build= True
     return buildProject(env, p, cache, b_outdated, job_count, force_build)
 
 def cleanProject(env, p, cache):

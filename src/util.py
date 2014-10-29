@@ -76,12 +76,14 @@ def objFilePath(src_file_path, p):
             + filenamize(src_file_path) + ".o")
 
 def targetPath(p):
-    if p.type == "exe":
-        return p.targetDir + "/" + p.name
-    elif p.type == "lib":
-        return p.targetDir + "/lib" + p.name + ".a"
-    else:
-        fail("Unsupported project type: " + p.type)
+	if p.type == "exe":
+		return p.targetDir + "/" + p.name
+	elif p.type == "lib":
+		return p.targetDir + "/lib" + p.name + ".a"
+	elif p.type == "obj":
+		return p.targetDir + "/obj_target_path_which_doesnt_exist"
+	else:
+		fail("Unsupported project type: " + p.type)
 
 def objHash(obj):
 	return hashlib.md5(cPickle.dumps(obj)).hexdigest()[0:8]

@@ -6,7 +6,8 @@ tests= [
 	("manyfiles", [ "" ]),
 	("multiplatform", [ "" ]),
 	("staticlib", [ "" ]),
-	("manyprojects", [ "" ])
+	("manyprojects", [ "" ]),
+	("proxyproject", [ "" ])
 ]
 
 if __name__ == "__main__":
