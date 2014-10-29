@@ -80,8 +80,6 @@ def targetPath(p):
 		return p.targetDir + "/" + p.name
 	elif p.type == "lib":
 		return p.targetDir + "/lib" + p.name + ".a"
-	elif p.type == "obj":
-		return p.targetDir + "/obj_target_path_which_doesnt_exist"
 	else:
 		fail("Unsupported project type: " + p.type)
 

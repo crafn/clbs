@@ -119,15 +119,15 @@ def buildProject(env, p, cache, b_outdated_files, job_count, force_build):
                             contents= file.read()
                     ## @todo Support spaces in filenames :---D
                     for word in contents.split(" "):
-                            word= word.strip()
-                            if len(word) <= 1: # Handle `\`
-                                    continue
-                            if word.endswith(":"): # Handle `file:`
-                                    continue
-                            dep= "./" + word
-                            if dep == src_path:
-                                    continue # File obviously depends on itself
-                            dep_paths.append(dep)
+                        word= word.strip()
+                        if len(word) <= 1: # Handle `\`
+                                continue
+                        if word.endswith(":"): # Handle `file:`
+                                continue
+                        dep= "./" + word
+                        if dep == src_path:
+                                continue # File obviously depends on itself
+                        dep_paths.append(dep)
             except Exception, e:
                     fail("Couldn't parse dependency file " +
                             dep_file_path + ": " + str(e))
@@ -207,8 +207,9 @@ def buildWithDeps(env, p, cache, b_outdated, job_count, already_built= set()):
                 b_outdated, job_count, already_built)
         if dep_changed:
             force_build= True
-    if not os.path.exists(targetPath(p)):
-        force_build= True
+    if p.type == "exe" or p.type == "lib":
+        if not os.path.exists(targetPath(p)):
+            force_build= True
     return buildProject(env, p, cache, b_outdated, job_count, force_build)
 
 def cleanProject(env, p, cache):
@@ -223,7 +224,8 @@ def cleanProject(env, p, cache):
                 del compile["fileBuildTimes"][src_path]
     rmEmptyDir(p.tempDir)
 
-    rmFile(targetPath(p))
+    if p.type == "exe" or p.type == "lib":
+        rmFile(targetPath(p))
 
 ## Internal func of runClbs
 def findProjectDepCluster(result, project):

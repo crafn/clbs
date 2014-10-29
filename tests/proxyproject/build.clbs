@@ -1,0 +1,17 @@
+def buildInfo(env, target):
+	a_dir= "./a/"
+	a= Project()
+	a.name= "proxy"
+	a.headers= [ a_dir + "a.hpp" ]
+	a.src= [ a_dir + "a.cpp" ]
+	a.type= "obj" # Only object files are generated
+
+	b= Project()
+	b.name= "b_executable"
+	b.src= [ "./b/main.cpp" ]
+	b.deps= [ a ]
+	# Using `a` instead of `a.name` when linking "obj" project
+	b.links= [ a ] 
+	b.includeDirs= [ a_dir ]
+	b.type= "exe"
+	return b
