@@ -15,8 +15,9 @@ def compilerJob(out_queue, in_queue):
             cmd= input[1]
         except Queue.Empty:
             return
-        except:
-            raise "Queue error"
+        except Exception, e:
+            print("clbs: internal error: " + str(e))
+            sys.exit(1)
 
         print(cmd)
         ret= os.system(cmd)
@@ -25,7 +26,7 @@ def compilerJob(out_queue, in_queue):
 ## Builds outdated parts of a project
 # @param b_outdated_files A set of paths to outdated files in the whole build
 # @param force_build Needed in case of rebuilt lib with only impl changes
-def buildProject(env, p, cache, b_outdated_files, force_build):
+def buildProject(env, p, cache, b_outdated_files, job_count, force_build):
     mkDir(p.tempDir)
 
     # Explicitly or implicitly outdated files of the project
@@ -80,7 +81,6 @@ def buildProject(env, p, cache, b_outdated_files, force_build):
 
         # Start compilation jobs
         ## @todo job count from command line
-        job_count= 4
         out_queue= mp_mgr.Queue(maxsize= len(src_paths))
         compiler_pool= mp.Pool(processes= job_count)
         for x in range(job_count):
@@ -173,16 +173,17 @@ def buildProject(env, p, cache, b_outdated_files, force_build):
 
         return True
 
-def buildWithDeps(env, p, cache, b_outdated, already_built= set()):
+def buildWithDeps(env, p, cache, b_outdated, job_count, already_built= set()):
     already_built.add(p)
     force_build= False
     for dep_p in p.deps:
         if dep_p in already_built:
             continue
-        dep_changed= buildWithDeps(env, dep_p, cache, b_outdated, already_built)
+        dep_changed= buildWithDeps(env, dep_p, cache,
+                b_outdated, job_count, already_built)
         if dep_changed:
             force_build= True
-    return buildProject(env, p, cache, b_outdated, force_build)
+    return buildProject(env, p, cache, b_outdated, job_count, force_build)
 
 def cleanProject(env, p, cache):
     log("cleaning " + p.name)
@@ -221,14 +222,18 @@ def runClbs(args):
     # @todo Some restrictions!
     exec build_file_src in globals(), locals()
 
+    # Parse args
     target= "default"
     clean= False
     resetcache= False
+    job_count= 1
     for arg in args:
         if arg == "clean":
             clean= True
         elif arg == "resetcache":
             resetcache= True
+        elif arg[:2] == "-j":
+            job_count= int(arg[2:])
         else:
             target= arg
     build= not clean and not resetcache
@@ -272,7 +277,7 @@ def runClbs(args):
                     for dep_path in rev_deps[file_path]:
                         b_outdated_files.add(dep_path)
 
-        buildWithDeps(env, project, cache, b_outdated_files)
+        buildWithDeps(env, project, cache, b_outdated_files, job_count)
     elif resetcache:
         log("resetcache")
         cache= Cache()
