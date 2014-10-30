@@ -22,7 +22,8 @@ class Project:
 		self.targetDir= "."
 		self.tempDir= "./obj"
 		self.compiler= "g++"
+		self.linker= "ld" # "ld" or "gold"
 		self.archiver= "ar"
-		self.type= "exe" ## "exe" or "lib"
+		self.type= "exe" ## "exe", "lib" or "obj"
 		# Private
 		self._compileHash= 0 # Unique for every project and compile cmd cfg

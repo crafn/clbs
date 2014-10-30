@@ -24,7 +24,7 @@ def compilerJob(out_queue, in_queue):
         print("clbs: " + msg)
         ret= os.system(cmd)
         out_queue.put((id, ret))
-        
+
 ## Builds outdated parts of a project
 # @param b_outdated_files A set of paths to outdated files in the whole build
 # @param force_build Needed in case of rebuilt lib with only impl changes
@@ -186,6 +186,8 @@ def buildProject(env, p, cache, b_outdated_files, job_count, force_build):
         mkDir(p.targetDir)
         if p.type == "exe":
             arg_str += " -o " + targetPath(p)
+            if p.linker != "ld":
+                arg_str += " -fuse-ld=" + p.linker
             cmd= p.compiler + arg_str
             clog(env.verbose, cmd)
             run(cmd)
