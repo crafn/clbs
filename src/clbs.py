@@ -188,6 +188,9 @@ def buildProject(env, p, cache, b_outdated_files, job_count, force_build):
             arg_str += " -o " + targetPath(p)
             if p.linker != "ld":
                 arg_str += " -fuse-ld=" + p.linker
+            if "gsplit-dwarf" in p.flags:
+                arg_str += " -Wl,--gdb-index" # Indirection of dbg info
+
             cmd= p.compiler + arg_str
             clog(env.verbose, cmd)
             run(cmd)
