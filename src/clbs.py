@@ -1,4 +1,4 @@
-import atexit, os, platform, sys, time
+import atexit, operator, os, platform, sys, time
 import multiprocessing as mp
 import Queue
 from cache import *
@@ -261,19 +261,22 @@ def runClbs(args):
     target= "default"
     clean= False
     resetcache= False
+    stats= False
     job_count= 1
     for arg in args:
         if arg == "clean":
             clean= True
         elif arg == "resetcache":
             resetcache= True
+        elif arg == "stats":
+            stats= True
         elif len(arg) > 2 and arg[:2] == "-j":
             job_count= int(arg[2:])
         elif arg == "-v":
             env.verbose= True
         else:
             target= arg
-    build= not clean and not resetcache
+    build= not clean and not resetcache and not stats
 
     project= buildInfo(env, target)
 
@@ -316,8 +319,22 @@ def runClbs(args):
     elif resetcache:
         log("resetcache")
         cache= Cache()
-    else:
+    elif stats:
+        log("most included")
+        counts= {}
         for p in p_dep_cluster:
-            if clean:
-                cleanProject(env, p, cache)
+            rev_deps= cache.compiles[p._compileHash]["fileRevDeps"]
+            for path, rev_deps in rev_deps.items():
+                if path not in counts:
+                    counts[path]= 0
+                counts[path] += len(rev_deps)
+        
+        top= sorted(counts.items(), key=operator.itemgetter(1))
+        for path, count in top:
+            if count <= 1:
+                continue
+            log(path + ": " + str(count))
+    elif clean:
+        for p in p_dep_cluster:
+            cleanProject(env, p, cache)
 
