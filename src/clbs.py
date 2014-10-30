@@ -161,6 +161,10 @@ def buildProject(env, p, cache, b_outdated_files, job_count, force_build):
             return True # Create only object files
 
         log("linking " + p.name)
+        # Remove target so project isn't considered ready if link fails
+        ## @todo Remove tiny window when all is compiled but old target exists,
+        #        or add target to fileBuildTimes
+        rmFile(targetPath(p))
 
         arg_str= ""
         for s in p.src:
@@ -201,8 +205,6 @@ def buildProject(env, p, cache, b_outdated_files, job_count, force_build):
             run(cmd)
         else:
             fail("Unsupported project type: " + p.type)
-
-        ## @todo Add target to fileBuildTimes
 
         return True
 
