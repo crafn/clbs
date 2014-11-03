@@ -74,7 +74,7 @@ def buildProject(env, p, cache, b_outdated_files, job_count, force_build):
             for f in p.flags:
                 arg_str += " -" + f
             for i in p.includeDirs:
-                arg_str += " -I" + i
+                arg_str += " -I\"" + i + "\""
             for d in p.defines:
                 arg_str += " -D" + d
             compile_cmd= p.compiler + arg_str
@@ -170,7 +170,7 @@ def buildProject(env, p, cache, b_outdated_files, job_count, force_build):
         for s in p.src:
             arg_str += " " + objFilePath(s, p)
         for l in p.libDirs:
-            arg_str += " -L" + l
+            arg_str += " -L\"" + l + "\""
         for l in p.links:
             if isinstance(l, str):
                 arg_str += " -l" + l
