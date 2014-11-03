@@ -7,7 +7,7 @@ Build system for Project Clover written in Python 2.7
 
 Install Python 2.7 and git, then
 
-	git clone <this repo>
+	git clone https://github.com/crafn/clbs.git
 	cd clbs
 	sudo ./INSTALL
 
@@ -26,7 +26,7 @@ It's recommended that plain `clbs` without targets and options builds something 
 
 Common options
 
-	clean    Remove objects, libs and executables produced by a former build
+	clean    remove objects, libs and executables produced by a former build
 	-jx      use x number of parallel compiler processes
 	-v       print compilation commands
 
