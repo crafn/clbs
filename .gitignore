@@ -15,3 +15,6 @@
 # Test binaries
 *_debug
 *_release
+
+# Windows installation
+win/

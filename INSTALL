@@ -1,7 +1,42 @@
 #!/usr/bin/env python
-import os, sys
+import os, platform, sys
+
+def scriptDir():
+	return os.path.dirname(os.path.realpath(__file__))
+
+def linuxInstall():
+	link_path= "/usr/local/bin/clbs"
+	os.symlink(scriptDir() + "/clbs.py", link_path)
+	print("Created symlink " + link_path)
+
+def windowsInstall():
+	# App Paths doesn't work with cmd.exe...
+	#import _winreg
+	#key= _winreg.CreateKey(
+	#	_winreg.HKEY_LOCAL_MACHINE,
+	#	"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\clbs.exe")
+	#_winreg.SetValue(key, "", _winreg.REG_SZ, scriptDir() + "\clbs.bat") 
+	#_winreg.CloseKey(key)
+
+	install_dir= scriptDir() + "\win"
+	try:
+		os.mkdir(install_dir)
+	except:
+		pass
+	file= open(install_dir + "\clbs.bat", "wb")
+	file.write("@echo off\r\n")
+	file.write("python %~dp0\..\clbs.py %*")
+	file.close()
+	if not install_dir in os.environ["PATH"].split(os.pathsep):
+		new_path_var= os.environ["PATH"] + os.pathsep + install_dir
+		os.system("setx PATH \"" + new_path_var + "\"")
+		print("Added " + install_dir + " to PATH")
+	else:
+		print(install_dir + " already in PATH")
 
 if __name__ == "__main__":
-	## @todo Windows support
-	os.symlink(os.getcwd() + "/clbs", "/usr/local/bin/clbs")
-
+	if platform.system() == "Windows":
+		windowsInstall()
+	else:
+		linuxInstall()
+	print("Installation succesfull!\nDon't remove the repository; clbs is still run from it")

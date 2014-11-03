@@ -10,17 +10,18 @@ tests= [
 	("proxyproject", [ "" ])
 ]
 
+
 if __name__ == "__main__":
 	args= ""
 	if len(sys.argv) > 1:
 		args= " ".join(sys.argv[1:])
 	log= []
 	failures= 0
-	os.chdir("./tests")
+	os.chdir(os.path.normpath("./tests"))
 	for name, targets in tests:
-		os.chdir(name)
+		os.chdir(os.path.normpath(name))
 		for target in targets:
-			ret= os.system("../../clbs " + target + " " + args)
+			ret= os.system("python " + os.path.normpath("../../clbs.py ") + target + " " + args)
 			if ret == 0:
 				log.append("  " + name + " " + target + " " + args)
 			else:
