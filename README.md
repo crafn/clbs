@@ -3,18 +3,20 @@
 Build system for Project Clover written in Python 2.7
 
 ## Installation
-### Linux
-
 Install Python 2.7 and git, then
 
 	git clone https://github.com/crafn/clbs.git
+
+### Linux
+
 	cd clbs
 	sudo ./INSTALL
 
-Now clbs can be used in any directory with the command `clbs`
-
 ### Windows
-TODO
+Run INSTALL.bat as administrator.
+
+
+Now clbs can be used in any directory with the command `clbs`
 
 ## Usage
 Building a project using clbs
