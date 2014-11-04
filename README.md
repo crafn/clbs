@@ -34,3 +34,6 @@ Common options
 
 ## TODO
 - fix occasional cache corruptions on windows
+- recreation of cache from files of previous builds
+- progress indicator
+- output should be also written to file
