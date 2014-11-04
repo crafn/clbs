@@ -1,4 +1,4 @@
-import cPickle, hashlib, os, sys
+import cPickle, hashlib, os, subprocess, sys
 from files import *
 
 def fail(msg):
@@ -14,9 +14,20 @@ def clog(condition, msg):
 		print("clbs: " + msg)
 
 def run(cmd):
-    ret= os.system(cmd)
-    if ret != 0:
-        fail("build failed")
+	p= subprocess.Popen(cmd, stdout=subprocess.PIPE)
+	while p.poll() is None:
+		l= p.stdout.readline()
+		if len(l) > 0:
+			print l
+	last= p.stdout.read()
+	if len(last) > 0:
+		print p.stdout.read()
+	return p.returncode
+
+def run_check(cmd):
+	ret= run(cmd)
+	if ret != 0:
+		fail("build failed")
 
 ## Finds paths to files in dir tree
 def findFiles(dir_path, patterns):

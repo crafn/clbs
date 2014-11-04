@@ -22,7 +22,7 @@ def compilerJob(out_queue, in_queue):
             sys.exit(1)
 
         print("clbs: " + msg)
-        ret= os.system(cmd)
+        ret= run(cmd)
         out_queue.put((id, ret))
 
 ## Builds outdated parts of a project
@@ -197,12 +197,12 @@ def buildProject(env, p, cache, b_outdated_files, job_count, force_build):
 
             cmd= p.compiler + arg_str
             clog(env.verbose, cmd)
-            run(cmd)
+            run_check(cmd)
         elif p.type == "lib":
             arg_str= " rcs " + targetPath(p) + " " + arg_str
             cmd= p.archiver + arg_str
             clog(env.verbose, cmd)
-            run(cmd)
+            run_check(cmd)
         else:
             fail("Unsupported project type: " + p.type)
 
