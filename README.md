@@ -32,3 +32,5 @@ Common options
 	-jx      use x number of parallel compiler processes
 	-v       print compilation commands
 
+## TODO
+- fix occasional cache corruptions on windows

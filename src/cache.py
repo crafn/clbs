@@ -29,8 +29,10 @@ def loadCache():
 			with open(cachePath(), "rb") as file:
 				cache.compiles= cPickle.load(file)
 				return cache
-		except:
-			fail("Unable to load cache file")
+		except EOFError, e:
+			fail("Unexpected end of cache file")
+		except Exception, e:
+			fail("Unable to load cache file: " + str(e))
 	else:
 		return cache
 
