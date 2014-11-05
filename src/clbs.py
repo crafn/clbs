@@ -6,24 +6,24 @@ from interface import *
 from util import *
 
 def compilerJob(out_queue, in_queue):
-    while True:
-        id= None
-        cmd= None
-        msg= None
-        try:
-            input= in_queue.get_nowait()
-            id= input[0]
-            cmd= input[1]
-            msg= input[2]
-        except Queue.Empty:
-            return
-        except Exception, e:
-            print("clbs: internal error: " + str(e))
-            sys.exit(1)
+	while True:
+		id= None
+		cmd= None
+		msg= None
+		try:
+			input= in_queue.get_nowait()
+			id= input[0]
+			cmd= input[1]
+			msg= input[2]
+		except Queue.Empty:
+			return
+		except Exception, e:
+			print("clbs: internal error: " + str(e))
+			sys.exit(1)
 
-        print("clbs: " + msg)
-        ret= run(cmd)
-        out_queue.put((id, ret))
+		print("clbs: " + msg)
+		ret= run(cmd)
+		out_queue.put((id, ret))
 
 ## Builds outdated parts of a project
 # @param b_outdated_files A set of paths to outdated files in the whole build

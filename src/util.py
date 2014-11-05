@@ -1,4 +1,4 @@
-import cPickle, hashlib, os, subprocess, sys
+import cPickle, hashlib, os, platform, subprocess, sys
 from files import *
 
 def fail(msg):
@@ -14,15 +14,24 @@ def clog(condition, msg):
 		print("clbs: " + msg)
 
 def run(cmd):
-	p= subprocess.Popen(cmd, stdout=subprocess.PIPE)
-	while p.poll() is None:
-		l= p.stdout.readline()
-		if len(l) > 0:
-			print l
-	last= p.stdout.read()
-	if len(last) > 0:
-		print p.stdout.read()
-	return p.returncode
+    try:
+        if platform.system() == "Linux":
+            # subprocess throws some error on linux
+            ## @todo Figure it out and use subprocess on linux too
+            return os.system(cmd)
+        else:
+            # Can't use os.system on windows because cmd.exe has char limit
+            p= subprocess.Popen(cmd, stdout=subprocess.PIPE)
+            while p.poll() is None:
+                l= p.stdout.readline()
+                if len(l) > 0:
+                    print(l)
+            rest= p.stdout.read()
+            if len(rest) > 0:
+                print(rest)
+            return p.returncode
+    except Exception, e:
+        fail("run failed: " + str(e))
 
 def run_check(cmd):
 	ret= run(cmd)
