@@ -22,9 +22,3 @@ Common options
 	clean    remove objects, libs and executables produced by a former build
 	-jx      use x number of parallel compiler processes
 	-v       print compilation commands
-
-## TODO
-- fix occasional cache corruptions on windows
-- recreation of cache from files of previous builds
-- progress indicator
-- output should be also written to file
