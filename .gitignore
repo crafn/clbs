@@ -15,6 +15,7 @@
 # Test binaries
 *_debug
 *_release
+obj
 
 # Windows installation
 win/

@@ -128,11 +128,10 @@ def buildProject(env, p, cache, b_outdated_files, job_count, force_build):
                         dep= "./" + word
                         if dep == src_path:
                                 continue # File obviously depends on itself
-                        dep_paths.append(dep)
+                        dep_paths.append(os.path.relpath(dep))
             except Exception, e:
                     fail("Couldn't parse dependency file " +
                             dep_file_path + ": " + str(e))
-            os.remove(dep_file_path)
 
             # Update cache
 
@@ -268,22 +267,25 @@ def runClbs(args):
     target= "default"
     clean= False
     resetcache= False
-    stats= False
+    print_stats= False
+    print_cache= False
     job_count= 1
     for arg in args:
         if arg == "clean":
             clean= True
         elif arg == "resetcache":
             resetcache= True
-        elif arg == "stats":
-            stats= True
+        elif arg == "statistics":
+            print_stats= True
+        elif arg == "cache":
+            print_cache= True
         elif len(arg) > 2 and arg[:2] == "-j":
             job_count= int(arg[2:])
         elif arg == "-v":
             env.verbose= True
         else:
             target= arg
-    build= not clean and not resetcache and not stats
+    build= not clean and not resetcache and not print_stats and not print_cache
 
     project= buildInfo(env, target)
 
@@ -303,6 +305,9 @@ def runClbs(args):
             p.tempDir,
             p.compiler,
             p.archiver))
+        clog(env.verbose, "project " + p.name + " " + p._compileHash)
+        for path in p.src + p.headers:
+            path= os.path.relpath(path)
 
     if build:
         # Find all (directly or indirectly) outdated files of the build
@@ -315,8 +320,8 @@ def runClbs(args):
                 b_outdated_files.add(file_path)
 
                 # Add also every file depending on this file
-                for compile in cache.compiles.values():
-                    rev_deps= compile["fileRevDeps"]
+                for cpl in cache.compiles.values():
+                    rev_deps= cpl["fileRevDeps"]
                     if not file_path in rev_deps:
                         continue
                     for dep_path in rev_deps[file_path]:
@@ -326,7 +331,7 @@ def runClbs(args):
     elif resetcache:
         log("resetcache")
         cache= Cache()
-    elif stats:
+    elif print_stats:
         log("most included")
         counts= {}
         for p in p_dep_cluster:
@@ -341,6 +346,13 @@ def runClbs(args):
             if count <= 1:
                 continue
             log(path + ": " + str(count))
+    elif print_cache:
+        for hash, cpl in cache.compiles.iteritems():
+            log("compile " + hash)
+            for path, deps in cpl["fileRevDeps"].iteritems():
+                log("  " + path)
+                for dep in deps:
+                    log("    " + dep)
     elif clean:
         for p in p_dep_cluster:
             cleanProject(env, p, cache)

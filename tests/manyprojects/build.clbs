@@ -13,5 +13,6 @@ def buildInfo(env, target):
 	b.links= [ a.name ]
 	b.includeDirs= [ a_dir ]
 	b.libDirs= [ a.targetDir ]
+	b.defines= [ "DEFINE_TO_DISTINGUISH_BUILD_HASHES" ]
 	b.type= "exe"
 	return b
