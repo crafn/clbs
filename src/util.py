@@ -66,6 +66,14 @@ def findNotMatching(lst, patterns):
 def filenamize(str):
 	return "".join([x if x.isalnum() else "_" for x in str])
 
+def normalizedPath(path):
+	## @todo Handle absolute paths correctly
+	try:
+		return os.path.relpath(path)
+	except:
+		log("os.path.relpath failed with " + path)
+		return path
+
 def mkDir(path):
 	if os.path.exists(path):
 		return

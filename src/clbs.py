@@ -125,10 +125,10 @@ def buildProject(env, p, cache, b_outdated_files, job_count, force_build):
                                 continue
                         if word.endswith(":"): # Handle `file:`
                                 continue
-                        dep= "./" + word
+                        dep= normalizedPath(word)
                         if dep == src_path:
                                 continue # File obviously depends on itself
-                        dep_paths.append(os.path.relpath(dep))
+                        dep_paths.append(dep)
             except Exception, e:
                     fail("Couldn't parse dependency file " +
                             dep_file_path + ": " + str(e))
@@ -307,7 +307,7 @@ def runClbs(args):
             p.archiver))
         clog(env.verbose, "project " + p.name + " " + p._compileHash)
         for path in p.src + p.headers:
-            path= os.path.relpath(path)
+            path= normalizedPath(path)
 
     if build:
         # Find all (directly or indirectly) outdated files of the build
