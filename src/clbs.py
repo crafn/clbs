@@ -67,16 +67,16 @@ def buildProject(env, p, cache, b_outdated_files, job_count, force_build):
                 continue
             src_path= file_path
             arg_str= ""
-            arg_str += " -c" # No linking at this phase
-            arg_str += " " + src_path
             arg_str += " -MMD" # Dep generation
-            arg_str += " -o " + objFilePath(src_path, p)
             for f in p.flags:
                 arg_str += " -" + f
             for i in p.includeDirs:
                 arg_str += " -I\"" + i + "\""
             for d in p.defines:
                 arg_str += " -D" + d
+            arg_str += " -c" # No linking at this phase
+            arg_str += " " + src_path
+            arg_str += " -o " + objFilePath(src_path, p)
             compile_cmd= p.compiler + arg_str
             msg= src_path
             if env.verbose:
@@ -188,11 +188,11 @@ def buildProject(env, p, cache, b_outdated_files, job_count, force_build):
 
         mkDir(p.targetDir)
         if p.type == "exe":
-            arg_str += " -o " + targetPath(p)
             if p.linker != "ld":
                 arg_str += " -fuse-ld=" + p.linker
             if "gsplit-dwarf" in p.flags:
                 arg_str += " -Wl,--gdb-index" # Indirection of dbg info
+            arg_str += " -o " + targetPath(p)
 
             cmd= p.compiler + arg_str
             clog(env.verbose, cmd)
