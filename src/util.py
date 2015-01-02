@@ -104,7 +104,7 @@ def objFilePath(src_file_path, p):
             + filenamize(src_file_path) + ".o")
 
 def targetPath(p):
-	if p.type == "exe":
+	if p.type == "exe" or p.type == "dll":
 		return p.targetDir + "/" + p.name
 	elif p.type == "lib":
 		return p.targetDir + "/lib" + p.name + ".a"

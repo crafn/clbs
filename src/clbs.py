@@ -68,6 +68,8 @@ def buildProject(env, p, cache, b_outdated_files, job_count, force_build):
             src_path= file_path
             arg_str= ""
             arg_str += " -MMD" # Dep generation
+            if p.type == "dll":
+                arg_str += " -fPIC" # Position independent code
             for f in p.flags:
                 arg_str += " -" + f
             for i in p.includeDirs:
@@ -202,6 +204,11 @@ def buildProject(env, p, cache, b_outdated_files, job_count, force_build):
             cmd= p.archiver + arg_str
             clog(env.verbose, cmd)
             run_check(cmd)
+        elif p.type == "dll":
+            arg_str= arg_str + " -shared -o " + targetPath(p)
+            cmd= p.compiler + arg_str
+            clog(env.verbose, cmd)
+            run_check(cmd)
         else:
             fail("Unsupported project type: " + p.type)
 
@@ -217,7 +224,7 @@ def buildWithDeps(env, p, cache, b_outdated, job_count, already_built= set()):
                 b_outdated, job_count, already_built)
         if dep_changed:
             force_build= True
-    if p.type == "exe" or p.type == "lib":
+    if p.type == "exe" or p.type == "lib" or p.type == "dll":
         if not os.path.exists(targetPath(p)):
             force_build= True
     return buildProject(env, p, cache, b_outdated, job_count, force_build)
@@ -234,7 +241,7 @@ def cleanProject(env, p, cache):
                 del compile["fileBuildTimes"][src_path]
     rmEmptyDir(p.tempDir)
 
-    if p.type == "exe" or p.type == "lib":
+    if p.type == "exe" or p.type == "lib" or p.type == "dll":
         rmFile(targetPath(p))
 
 ## Internal func of runClbs
@@ -300,6 +307,7 @@ def runClbs(args):
         # shouldn't usually cause recompilation
         p._compileHash= objHash(
             (p.name,
+            p.type,
             p.flags,
             p.defines,
             p.tempDir,

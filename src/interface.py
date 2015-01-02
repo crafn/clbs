@@ -24,6 +24,6 @@ class Project:
 		self.compiler= "g++"
 		self.linker= "ld" # "ld" or "gold"
 		self.archiver= "ar"
-		self.type= "exe" ## "exe", "lib" or "obj"
+		self.type= "exe" ## "exe", "lib", "obj" or "dll"
 		# Private
 		self._compileHash= 0 # Unique for every project and compile cmd cfg
