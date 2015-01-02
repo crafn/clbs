@@ -42,21 +42,6 @@ def buildProject(env, p, cache, b_outdated_files, job_count, force_build):
         return False
     else:
         log("building " + p.name)
-        if not p._compileHash in cache.compiles:
-            cache.compiles[p._compileHash]= { 
-                "fileBuildTimes": {},
-                "fileRevDeps": {}
-            }
-
-        # Set headers to updated and sources to outdated
-        # This ensures that if build fails halfways, the correct source
-        # files will be compiled on next build
-        for file_path in outdated_files:
-            cpl_time= 0
-            if file_path in p.headers:
-                cpl_time= modTime(file_path)
-            compile= cache.compiles[p._compileHash]
-            compile["fileBuildTimes"][file_path]= cpl_time
 
         # Set up compilation command queue
         mp_mgr= mp.Manager()
@@ -138,7 +123,7 @@ def buildProject(env, p, cache, b_outdated_files, job_count, force_build):
             # Update cache
 
             compile= cache.compiles[p._compileHash]
-            compile["fileBuildTimes"][src_path]= modTime(src_path)
+            compile["fileBuildTimes"][src_path]= modTime(src_path) ## @todo Fix window
 
             fileRevDeps= compile["fileRevDeps"]
             if not src_path in fileRevDeps:
@@ -297,7 +282,7 @@ def runClbs(args):
     project= buildInfo(env, target)
 
     cache= loadCache()
-    atexit.register(lambda: writeCache(cache))
+    atexit.register(lambda: writeCache(env, cache))
 
     # Preprocess all projects in dep cluster
     p_dep_cluster= []
@@ -318,14 +303,15 @@ def runClbs(args):
             path= normalizedPath(path)
 
     if build:
-        # Find all (directly or indirectly) outdated files of the build
         b_outdated_files= set()
         for p in p_dep_cluster:
+            # Find all (directly or indirectly) outdated files of project `p`
+            p_outdated= set()
             for file_path in p.src + p.headers:
                 if not outdated(file_path, p._compileHash, cache):
                     continue
                 clog(env.verbose, "found change in " + file_path)
-                b_outdated_files.add(file_path)
+                p_outdated.add(file_path)
 
                 # Add also every file depending on this file
                 for cpl in cache.compiles.values():
@@ -333,8 +319,25 @@ def runClbs(args):
                     if not file_path in rev_deps:
                         continue
                     for dep_path in rev_deps[file_path]:
-                        b_outdated_files.add(dep_path)
+                        p_outdated.add(dep_path)
+            b_outdated_files= b_outdated_files.union(p_outdated)
 
+            # Set headers to updated and sources to outdated
+            # This ensures that if build fails halfways, correct source
+            # files will be compiled on next build
+            if not p._compileHash in cache.compiles:
+                cache.compiles[p._compileHash]= { 
+                    "fileBuildTimes": {},
+                    "fileRevDeps": {}
+                }
+            compile= cache.compiles[p._compileHash]
+            for file_path in p_outdated:
+                cpl_time= 0
+                if file_path in p.headers:
+                    cpl_time= modTime(file_path)
+                compile["fileBuildTimes"][file_path]= cpl_time
+
+        # Build required projects
         buildWithDeps(env, project, cache, b_outdated_files, job_count)
     elif resetcache:
         log("resetcache")

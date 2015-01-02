@@ -13,13 +13,14 @@ class Cache:
 def cachePath():
 	return "./clbs.cache"
 
-def writeCache(cache):
-	#log("Writing cache: ")
+def writeCache(env, cache):
+	clog(env.verbose, "Writing cache")
 	try:
 		with open(cachePath(), "wb") as file:
 			cPickle.dump(cache.compiles, file)
 	except:
 		fail("Unable to write cache file")
+	clog(env.verbose, "Writing cache completed")
 
 def loadCache():
 	#log("Loading cache")
