@@ -6,24 +6,24 @@ from interface import *
 from util import *
 
 def compilerJob(out_queue, in_queue):
-	while True:
-		id= None
-		cmd= None
-		msg= None
-		try:
-			input= in_queue.get_nowait()
-			id= input[0]
-			cmd= input[1]
-			msg= input[2]
-		except Queue.Empty:
-			return
-		except Exception, e:
-			print("clbs: internal error: " + str(e))
-			sys.exit(1)
+    while True:
+        id= None
+        cmd= None
+        msg= None
+        try:
+            input= in_queue.get_nowait()
+            id= input[0]
+            cmd= input[1]
+            msg= input[2]
+        except Queue.Empty:
+            return
+        except Exception, e:
+            print("clbs: internal error: " + str(e))
+            sys.exit(1)
 
-		print("clbs: " + msg)
-		ret= run(cmd)
-		out_queue.put((id, ret))
+        print("clbs: " + msg)
+        ret= run(cmd)
+        out_queue.put((id, ret))
 
 ## Builds outdated parts of a project
 # @param b_outdated_files A set of paths to outdated files in the whole build
@@ -54,10 +54,10 @@ def buildProject(env, p, cache, b_outdated_files, job_count, force_build):
             arg_str= ""
             arg_str += " -MMD" # Dep generation
             if p.type == "dll":
-				if env.os == "linux":
-					arg_str += " -fPIC" # Position independent code
-				else:
-					arg_str += " -shared"
+                if env.os == "linux":
+                    arg_str += " -fPIC" # Position independent code
+                else:
+                    arg_str += " -shared"
             for f in p.flags:
                 arg_str += " -" + f
             for i in p.includeDirs:
@@ -91,6 +91,7 @@ def buildProject(env, p, cache, b_outdated_files, job_count, force_build):
             id= out[0]
             success= out[1] == 0
             src_path= src_paths[id]
+            assert src_path == normalizedPath(src_path), "Internal error"
 
             if success:
                 cpl_count += 1
@@ -142,6 +143,7 @@ def buildProject(env, p, cache, b_outdated_files, job_count, force_build):
             for dep_path in dep_paths:
                 if not dep_path in fileRevDeps:
                     fileRevDeps[dep_path]= []
+                assert dep_path == normalizedPath(dep_path), "Internal error"
                 fileRevDeps[dep_path].append(src_path)
 
         if p.type == "obj":
@@ -305,8 +307,15 @@ def runClbs(args):
             p.compiler,
             p.archiver))
         clog(env.verbose, "project " + p.name + " " + p._compileHash)
-        for path in p.src + p.headers:
-            path= normalizedPath(path)
+        if not p._compileHash in cache.compiles:
+            cache.compiles[p._compileHash]= { 
+                "fileBuildTimes": {},
+                "fileRevDeps": {}
+        }
+        for i, path in enumerate(p.src):
+            p.src[i]= normalizedPath(path)
+        for i, path in enumerate(p.headers):
+            p.headers[i]= normalizedPath(path)
 
     if build:
         b_outdated_files= set()
@@ -331,11 +340,6 @@ def runClbs(args):
             # Set headers to updated and sources to outdated
             # This ensures that if build fails halfways, correct source
             # files will be compiled on next build
-            if not p._compileHash in cache.compiles:
-                cache.compiles[p._compileHash]= { 
-                    "fileBuildTimes": {},
-                    "fileRevDeps": {}
-                }
             compile= cache.compiles[p._compileHash]
             for file_path in p_outdated:
                 cpl_time= 0
