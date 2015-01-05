@@ -54,7 +54,10 @@ def buildProject(env, p, cache, b_outdated_files, job_count, force_build):
             arg_str= ""
             arg_str += " -MMD" # Dep generation
             if p.type == "dll":
-                arg_str += " -fPIC" # Position independent code
+				if env.os == "linux":
+					arg_str += " -fPIC" # Position independent code
+				else:
+					arg_str += " -shared"
             for f in p.flags:
                 arg_str += " -" + f
             for i in p.includeDirs:
