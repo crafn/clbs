@@ -159,7 +159,10 @@ def buildProject(env, p, cache, b_outdated_files, job_count, force_build):
             arg_str += " -L\"" + l + "\""
         for l in p.links:
             if isinstance(l, str):
-                arg_str += " -l" + l
+                if l[0] != "-":
+                    arg_str += " -l" + l # Library
+                else:
+                    arg_str += " -Wl," + l # Linker command
             elif isinstance(l, Project):
                 if l.type != "obj":
                     fail("Only projects of type \"obj\" can be links")
