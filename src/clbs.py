@@ -264,7 +264,7 @@ def runClbs(args):
     env.os= platform.system().lower()
 
     # Parse args
-    target= "default"
+    tags= []
     clean= False
     resetcache= False
     print_stats= False
@@ -284,10 +284,10 @@ def runClbs(args):
         elif arg == "-v":
             env.verbose= True
         else:
-            target= arg
+            tags += [ arg ]
     build= not clean and not resetcache and not print_stats and not print_cache
 
-    project= buildInfo(env, target)
+    project= buildInfo(env, tags)
 
     cache= loadCache()
     atexit.register(lambda: writeCache(env, cache))
