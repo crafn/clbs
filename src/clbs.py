@@ -155,7 +155,7 @@ def buildProject(env, p, cache, b_outdated_files, job_count, force_build):
         # Remove old target so project isn't considered ready if link fails
         ## @todo Remove tiny window when all is compiled but old target exists,
         #        or add target to fileBuildTimes
-        rmFile(targetPath(p))
+        rmFile(targetPath(env, p))
 
         arg_str= ""
         for s in p.src:
@@ -187,18 +187,18 @@ def buildProject(env, p, cache, b_outdated_files, job_count, force_build):
                 arg_str += " -fuse-ld=" + p.linker
             if "gsplit-dwarf" in p.flags:
                 arg_str += " -Wl,--gdb-index" # Indirection of dbg info
-            arg_str += " -o " + targetPath(p)
+            arg_str += " -o " + targetPath(env, p)
 
             cmd= p.compiler + arg_str
             clog(env.verbose, cmd)
             run_check(cmd)
         elif p.type == "lib":
-            arg_str= " rcs " + targetPath(p) + " " + arg_str
+            arg_str= " rcs " + targetPath(env, p) + " " + arg_str
             cmd= p.archiver + arg_str
             clog(env.verbose, cmd)
             run_check(cmd)
         elif p.type == "dll":
-            arg_str= arg_str + " -shared -o " + targetPath(p)
+            arg_str= arg_str + " -shared -o " + targetPath(env, p)
             cmd= p.compiler + arg_str
             clog(env.verbose, cmd)
             run_check(cmd)
@@ -218,7 +218,7 @@ def buildWithDeps(env, p, cache, b_outdated, job_count, already_built= set()):
         if dep_changed:
             force_build= True
     if p.type == "exe" or p.type == "lib" or p.type == "dll":
-        if not os.path.exists(targetPath(p)):
+        if not os.path.exists(targetPath(env, p)):
             force_build= True
     return buildProject(env, p, cache, b_outdated, job_count, force_build)
 
@@ -235,7 +235,7 @@ def cleanProject(env, p, cache):
     rmEmptyDir(p.tempDir)
 
     if p.type == "exe" or p.type == "lib" or p.type == "dll":
-        rmFile(targetPath(p))
+        rmFile(targetPath(env, p))
 
 ## Internal func of runClbs
 def findProjectDepCluster(result, project):
