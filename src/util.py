@@ -105,7 +105,10 @@ def objFilePath(src_file_path, p):
 
 def targetPath(env, p):
     if p.type == "exe":
-        return p.targetDir + "/" + p.name
+		if env.os == "windows":
+			return p.targetDir + "/" + p.name + ".exe"
+		else:
+			return p.targetDir + "/" + p.name
     elif p.type == "dll":
         if env.os == "linux":
             return p.targetDir + "/" + p.name + ".so"
