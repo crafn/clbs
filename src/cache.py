@@ -17,18 +17,19 @@ def writeCache(env, cache):
 	clog(env.verbose, "Writing cache")
 	try:
 		with open(cachePath(), "wb") as file:
-			cPickle.dump(cache.compiles, file)
+			cPickle.dump(cache.compiles, file, protocol= cPickle.HIGHEST_PROTOCOL)
 	except:
 		fail("Unable to write cache file")
 	clog(env.verbose, "Writing cache completed")
 
-def loadCache():
-	#log("Loading cache")
+def loadCache(env):
+	clog(env.verbose, "Loading cache")
 	cache= Cache()
 	if os.path.exists(cachePath()):
 		try:
 			with open(cachePath(), "rb") as file:
 				cache.compiles= cPickle.load(file)
+				clog(env.verbose, "Loading cache completed")
 				return cache
 		except EOFError, e:
 			fail("Unexpected end of cache file")

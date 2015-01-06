@@ -289,7 +289,7 @@ def runClbs(args):
 
     project= buildInfo(env, tags)
 
-    cache= loadCache()
+    cache= loadCache(env)
     atexit.register(lambda: writeCache(env, cache))
 
     # Preprocess all projects in dep cluster
