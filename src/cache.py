@@ -6,9 +6,12 @@ from interface import *
 
 ## Information preserved between builds
 class Cache:
+	## @todo Organize so that file names are not stored so many times.
+	##       Can have significant impact on load and save.
 	compiles= {} # Maps compileHash to dictionary containing:
 		# fileBuildTimes= {} # Maps file_path to last build time
 		# fileRevDeps= {} # Maps file_path to list of dependents
+		# headerPaths= {} # List of header files
 
 def cachePath():
 	return "./clbs.cache"

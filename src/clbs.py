@@ -310,17 +310,22 @@ def runClbs(args):
         if not p._compileHash in cache.compiles:
             cache.compiles[p._compileHash]= { 
                 "fileBuildTimes": {},
-                "fileRevDeps": {}
+                "fileRevDeps": {},
+                "headerPaths": {}
         }
         for i, path in enumerate(p.src):
             p.src[i]= normalizedPath(path)
         for i, path in enumerate(p.headers):
             p.headers[i]= normalizedPath(path)
+        cache.compiles[p._compileHash]["headerPaths"]= p.headers;
 
     if build:
         b_outdated_files= set()
         for p in p_dep_cluster:
             # Find all (directly or indirectly) outdated files of project `p`
+            # Also, set dependent headers to updated and sources to outdated
+            # This ensures that if build fails halfways, correct source
+            # files will be compiled on next build
             p_outdated= set()
             for file_path in p.src + p.headers:
                 if not outdated(file_path, p._compileHash, cache):
@@ -328,24 +333,26 @@ def runClbs(args):
                 clog(env.verbose, "found change in " + file_path)
                 p_outdated.add(file_path)
 
+                compile= cache.compiles[p._compileHash]
+                if file_path in p.headers:
+                    compile["fileBuildTimes"][file_path]= modTime(file_path) # Updated
+                else:
+                    compile["fileBuildTimes"][file_path]= 0 # Outdated
+
                 # Add also every file depending on this file
-                for cpl in cache.compiles.values():
-                    rev_deps= cpl["fileRevDeps"]
+                for dep_cpl in cache.compiles.values():
+                    rev_deps= dep_cpl["fileRevDeps"]
                     if not file_path in rev_deps:
                         continue
                     for dep_path in rev_deps[file_path]:
                         p_outdated.add(dep_path)
-            b_outdated_files= b_outdated_files.union(p_outdated)
 
-            # Set headers to updated and sources to outdated
-            # This ensures that if build fails halfways, correct source
-            # files will be compiled on next build
-            compile= cache.compiles[p._compileHash]
-            for file_path in p_outdated:
-                cpl_time= 0
-                if file_path in p.headers:
-                    cpl_time= modTime(file_path)
-                compile["fileBuildTimes"][file_path]= cpl_time
+                        if dep_path in dep_cpl["headerPaths"]:
+                            dep_cpl["fileBuildTimes"][dep_path]= modTime(dep_path) # Updated
+                        else:
+                            dep_cpl["fileBuildTimes"][dep_path]= 0 # Outdated
+
+            b_outdated_files= b_outdated_files.union(p_outdated)
 
         # Build required projects
         buildWithDeps(env, project, cache, b_outdated_files, job_count)
