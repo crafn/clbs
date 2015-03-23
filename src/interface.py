@@ -25,5 +25,6 @@ class Project:
 		self.linker= "ld" # "ld" or "gold"
 		self.archiver= "ar"
 		self.type= "exe" ## "exe", "lib", "obj" or "dll"
+                self.prebuild= lambda: None
 		# Private
 		self._compileHash= 0 # Unique for every project and compile cmd cfg

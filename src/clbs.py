@@ -42,6 +42,7 @@ def buildProject(env, p, cache, b_outdated_files, job_count, force_build):
         return False
     else:
         log("building " + p.name)
+        p.prebuild()
 
         # Set up compilation command queue
         mp_mgr= mp.Manager()
