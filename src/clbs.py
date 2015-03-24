@@ -128,7 +128,7 @@ def buildProject(env, p, cache, b_outdated_files, job_count, force_build):
             # Update cache
 
             compile= cache.compiles[p._compileHash]
-            compile["fileBuildTimes"][src_path]= modTime(src_path) ## @todo Fix window
+            compile["fileBuildTimes"][src_path]= newBuildTimeInfo(src_path) ## @todo Fix window
 
             fileRevDeps= compile["fileRevDeps"]
             if not src_path in fileRevDeps:
@@ -331,14 +331,14 @@ def runClbs(args):
             for file_path in p.src + p.headers:
                 if not outdated(file_path, p._compileHash, cache):
                     continue
-                clog(env.verbose, "found change in " + file_path)
+                clog(env.verbose, "found change in " + file_path + " (" + p.name + ")")
                 p_outdated.add(file_path)
 
                 compile= cache.compiles[p._compileHash]
                 if file_path in p.headers:
-                    compile["fileBuildTimes"][file_path]= modTime(file_path) # Updated
+					compile["fileBuildTimes"][file_path]= newBuildTimeInfo(file_path)
                 else:
-                    compile["fileBuildTimes"][file_path]= 0 # Outdated
+                    compile["fileBuildTimes"][file_path]= outdatedBuildTimeInfo()
 
                 # Add also every file depending on this file
                 for dep_cpl in cache.compiles.values():
@@ -349,9 +349,9 @@ def runClbs(args):
                         p_outdated.add(dep_path)
 
                         if dep_path in dep_cpl["headerPaths"]:
-                            dep_cpl["fileBuildTimes"][dep_path]= modTime(dep_path) # Updated
+                            dep_cpl["fileBuildTimes"][dep_path]= newBuildTimeInfo(file_path)
                         else:
-                            dep_cpl["fileBuildTimes"][dep_path]= 0 # Outdated
+                            dep_cpl["fileBuildTimes"][dep_path]= outdatedBuildTimeInfo()
 
             b_outdated_files= b_outdated_files.union(p_outdated)
 
